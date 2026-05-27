@@ -61,10 +61,18 @@ runs:
           shasum -a 256 -c SHA256SUMS.filtered
         fi
 
-        case "${ext}" in
-          tar.gz) tar -xzf "${asset}" ;;
-          # Windows tar is bsdtar (Windows 10 1803+) and handles zip natively.
-          zip)    tar -xf "${asset}"  ;;
+        case "${RUNNER_OS}-${ext}" in
+          Linux-tar.gz | macOS-tar.gz)
+            tar -xzf "${asset}"
+            ;;
+          Windows-zip)
+            # GitHub-hosted Windows runners surface GNU tar (no zip
+            # support) in Git Bash's PATH ahead of the Windows-native
+            # bsdtar at C:\Windows\System32\tar.exe. PowerShell's
+            # Expand-Archive sidesteps the tar mismatch.
+            powershell -Command "Expand-Archive -Force -Path '${asset}' -DestinationPath '.'"
+            ;;
+          *) echo "unsupported archive: ${RUNNER_OS}-${ext}" >&2; exit 1 ;;
         esac
 
         if [[ "${RUNNER_OS}" == "Windows" ]]; then
