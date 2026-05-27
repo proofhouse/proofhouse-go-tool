@@ -170,7 +170,7 @@ fix-markdown *args:
 # Run every linter that operates on the source tree. Aggregator.
 # Config, spelling, and workflow linters land on their own dedicated
 # targets and join this recipe as they arrive.
-lint: lint-go lint-go-modernize lint-go-deadcode lint-go-arch lint-prose lint-spelling lint-markdown lint-config lint-yaml
+lint: lint-go lint-go-modernize lint-go-deadcode lint-go-arch lint-prose lint-spelling lint-markdown lint-config lint-yaml lint-workflows
 
 # Run Go linters (golangci-lint via the pinned Docker image, vendor-mode).
 # --modules-download-mode=vendor matches `just build`, so the linter sees
@@ -253,6 +253,19 @@ lint-config *args:
 # tuning lives in .yamllint.yaml.
 lint-yaml *args:
     yamllint --strict {{ if args == "" { "." } else { args } }}
+
+# Lint GitHub Actions workflow files via actionlint. actionlint walks
+# `.github/workflows/` by default, parses each workflow, and flags
+# unknown actions, mis-typed expressions, shellcheck issues inside
+# `run:` blocks, and SHA-pin drift. Complements `lint-yaml` (which
+# checks YAML structure) with workflow-shape rules yamllint can't see.
+#
+# Pinned as a `go tool` dep in go.mod so the local and CI versions
+# stay aligned and Renovate bumps the rule set via go.mod. The
+# matching `.github/workflows/lint-workflows.yml` invokes this recipe
+# on every PR that touches the workflow directory.
+lint-workflows:
+    go tool actionlint
 
 # --- Test ---
 
