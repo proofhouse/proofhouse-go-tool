@@ -13,6 +13,7 @@
     "go.sum",
     "LICENSE",
     "node_modules/**/*",
+    "tmp/**/*",
     "vendor/**/*",
     "uv.lock"
   ],
