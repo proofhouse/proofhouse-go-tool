@@ -268,6 +268,17 @@ test *args:
 test-race:
     go test -race ./...
 
+# Mutation-testing timeout coefficient. Gremlins gates each mutant's
+# test run at `coefficient * baseline_test_time`. The upstream
+# default of 3 leaves a budget of a few hundred milliseconds for
+# this project's sub-second test suites, so legitimate assertion
+# kills get reclassified as TIMED OUT under any noticeable system
+# load. 100 keeps the per-mutation worst case under a minute while
+# producing stable LIVED-versus-KILLED labels. Override by setting
+# GREMLINS_TIMEOUT_COEFFICIENT or by passing `--timeout-coefficient`
+# directly to a recipe (the last value wins under pflag).
+gremlins_timeout_coefficient := env("GREMLINS_TIMEOUT_COEFFICIENT", "100")
+
 # Run mutation testing via gremlins. Gremlins mutates expressions in
 # the source under [path] (default the current directory), rebuilds
 # the package, and re-runs the tests against each mutation. Each
@@ -286,14 +297,14 @@ test-race:
 # Pinned as a `go tool` dep in go.mod so the mutator catalog is
 # reproducible across machines and bumps land as reviewable diffs.
 mutate *args:
-    go tool gremlins unleash {{ if args == "" { "." } else { args } }}
+    go tool gremlins unleash --timeout-coefficient {{ gremlins_timeout_coefficient }} {{ if args == "" { "." } else { args } }}
 
 # Mutate the whole module from the repository root. This is the
 # nightly form, factored out so the future `mutation-nightly.yml`
 # workflow has a single recipe to invoke and contributors can run
 # the same scan locally before opening a release-bound PR.
 mutate-all:
-    go tool gremlins unleash .
+    go tool gremlins unleash --timeout-coefficient {{ gremlins_timeout_coefficient }} .
 
 # --- Security ---
 

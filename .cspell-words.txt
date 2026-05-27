@@ -107,6 +107,7 @@ dedupe
 exitcode
 logfmt
 owenrumney
+pflag
 ruleid
 vendormod
 vexgen
