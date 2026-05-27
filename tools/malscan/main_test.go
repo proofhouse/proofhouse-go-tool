@@ -4,6 +4,7 @@
 package main
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,25 +14,49 @@ import (
 	"github.com/proofhouse/proofhouse-go/tools/malscan/osv"
 )
 
-func TestFindingString(t *testing.T) {
+func TestFindingProps(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		f    finding
+		want map[string]string
+	}{
+		{
+			name: "id only when summary missing",
+			f: finding{
+				module: "example.com/a", version: "v1.0.0", id: "MAL-2025-0001",
+			},
+			want: map[string]string{"id": "MAL-2025-0001"},
+		},
+		{
+			name: "id plus trimmed summary",
+			f: finding{
+				module: "example.com/a", version: "v1.0.0", id: "MAL-2025-0001",
+				summary: "  Backdoor introduced  ",
+			},
+			want: map[string]string{"id": "MAL-2025-0001", "summary": "Backdoor introduced"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tc.want, tc.f.props())
+		})
+	}
+}
+
+func TestFindingMessage(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(t,
-		"MALICIOUS example.com/a@v1.0.0 (MAL-2025-0001) — Backdoor introduced in v1.0.0",
-		finding{
-			module:  "example.com/a",
-			version: "v1.0.0",
-			id:      "MAL-2025-0001",
-			summary: "Backdoor introduced in v1.0.0",
-		}.String(),
+		"OSV malicious-package advisory MAL-2025-0001.",
+		finding{id: "MAL-2025-0001"}.message(),
 	)
 	assert.Equal(t,
-		"MALICIOUS example.com/a@v1.0.0 (MAL-2025-0001) — no summary recorded",
-		finding{
-			module:  "example.com/a",
-			version: "v1.0.0",
-			id:      "MAL-2025-0001",
-		}.String(),
+		"OSV malicious-package advisory MAL-2025-0001: Backdoor introduced.",
+		finding{id: "MAL-2025-0001", summary: "Backdoor introduced"}.message(),
 	)
 }
 
@@ -81,4 +106,46 @@ func TestCollectFindings(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEmitText_UnifiedFormat(t *testing.T) {
+	t.Parallel()
+
+	hits := []finding{
+		{module: "example.com/a", version: "v1.0.0", id: "MAL-2025-0001", summary: "Backdoor introduced"},
+		{module: "example.com/b", version: "v2.0.0", id: "MAL-2025-0002"},
+	}
+
+	var buf bytes.Buffer
+	require.NoError(t, emitText(&buf, hits))
+	assert.Equal(t,
+		"error: malscan/malicious-package: example.com/a@v1.0.0 id=MAL-2025-0001 summary=\"Backdoor introduced\"\n"+
+			"error: malscan/malicious-package: example.com/b@v2.0.0 id=MAL-2025-0002\n",
+		buf.String(),
+	)
+}
+
+func TestEmitSARIF_EmitsMaliciousRuleAndResults(t *testing.T) {
+	t.Parallel()
+
+	hits := []finding{
+		{module: "example.com/a", version: "v1.0.0", id: "MAL-2025-0001", summary: "Backdoor introduced"},
+	}
+
+	var buf bytes.Buffer
+	require.NoError(t, emitSARIF(&buf, hits))
+	out := buf.String()
+	assert.Contains(t, out, `"name": "malscan"`)
+	assert.Contains(t, out, `"id": "malicious-package"`)
+	assert.Contains(t, out, `"ruleId": "malicious-package"`)
+	assert.Contains(t, out, `"level": "error"`)
+	assert.Contains(t, out, `"name": "example.com/a@v1.0.0"`)
+	assert.Contains(t, out, `"id": "MAL-2025-0001"`)
+}
+
+func TestEmitFindings_UnknownFormatErrors(t *testing.T) {
+	t.Parallel()
+	err := emitFindings(&bytes.Buffer{}, "json", nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown -format")
 }

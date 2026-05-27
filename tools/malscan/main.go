@@ -7,7 +7,7 @@
 // workflow under .github/workflows/ re-runs the same scan on every
 // PR.
 //
-// Usage: malscan [-modroot dir]
+// Usage: malscan [-modroot dir] [-format text|sarif]
 //
 // malscan reads vendor/modules.txt under -modroot (defaults to the
 // current working directory), queries the OSV /v1/query endpoint for
@@ -17,25 +17,38 @@
 // malware rather than as a known vulnerability. Modules replaced to
 // a local path fall outside the OSV registry and get skipped.
 //
+// The -format flag selects the finding emitter. Text output (the
+// default) follows the unified shape documented in the [findings]
+// package. SARIF output emits a v2.1.0 report suitable for
+// ingestion by GitHub Code Scanning.
+//
 // [OSSF malicious-packages]: https://github.com/ossf/malicious-packages
+// [findings]: https://pkg.go.dev/github.com/proofhouse/proofhouse-go/tools/internal/findings
 package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
+	"github.com/proofhouse/proofhouse-go/tools/internal/exitcode"
+	"github.com/proofhouse/proofhouse-go/tools/internal/findings"
 	"github.com/proofhouse/proofhouse-go/tools/internal/vendormod"
 	"github.com/proofhouse/proofhouse-go/tools/malscan/osv"
 )
 
+// errUnknownFormat reports that the -format flag carried a value
+// outside the {text, sarif} allowlist. The sentinel form supports
+// programmatic matching and keeps wrapcheck and err113 quiet.
+var errUnknownFormat = errors.New("unknown -format (want text or sarif)")
+
 const (
-	exitOK          = 0
-	exitFindings    = 1
-	exitToolFailure = 2
+	toolName = "malscan"
+	ruleID   = "malicious-package"
 
 	// goEcosystem names the Go ecosystem in OSV requests.
 	goEcosystem = "Go"
@@ -57,55 +70,109 @@ type finding struct {
 	summary string
 }
 
-func (f finding) String() string {
-	return fmt.Sprintf("MALICIOUS %s@%s (%s) — %s", f.module, f.version, f.id, displaySummary(f.summary))
+// props returns the property bag for this finding in the shape
+// shared by the text and SARIF emitters. Keys match SARIF property
+// names so consumers reading either output channel see the same
+// vocabulary.
+func (f finding) props() map[string]string {
+	p := map[string]string{"id": f.id}
+	if f.summary != "" {
+		p["summary"] = strings.TrimSpace(f.summary)
+	}
+	return p
 }
 
-func displaySummary(s string) string {
-	if s == "" {
-		return "no summary recorded"
+// message returns the prose used as the SARIF result message. The
+// text emitter doesn't use it; the unified text format encodes the
+// same information through level/rule/properties.
+func (f finding) message() string {
+	if f.summary == "" {
+		return fmt.Sprintf("OSV malicious-package advisory %s.", f.id)
 	}
-	return strings.TrimSpace(s)
+	return fmt.Sprintf("OSV malicious-package advisory %s: %s.", f.id, strings.TrimSpace(f.summary))
 }
 
 func main() {
 	modroot := flag.String("modroot", "", "module root to scan (defaults to cwd)")
+	format := flag.String("format", "text", "output format: text or sarif")
 	flag.Parse()
 
-	rc, err := run(context.Background(), *modroot, os.Stdout, os.Stderr)
+	rc, err := run(context.Background(), *modroot, *format, os.Stdout, os.Stderr)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "malscan: %v\n", err)
 	}
 	os.Exit(rc)
 }
 
-func run(ctx context.Context, modroot string, out, errOut io.Writer) (int, error) {
+func run(ctx context.Context, modroot, format string, out, errOut io.Writer) (int, error) {
 	mods, err := vendormod.Read(modroot)
 	if err != nil {
-		return exitToolFailure, fmt.Errorf("read vendored modules: %w", err)
+		return exitcode.ToolFailure, fmt.Errorf("read vendored modules: %w", err)
 	}
 
 	client := &osv.Client{}
-	var findings []finding
+	var hits []finding
 	for _, mod := range mods {
-		hits, lookupErr := evaluateModule(ctx, client, mod)
+		got, lookupErr := evaluateModule(ctx, client, mod)
 		if lookupErr != nil {
 			fmt.Fprintf(errOut, "malscan: %s: %v\n", mod.Path, lookupErr)
 			continue
 		}
-		findings = append(findings, hits...)
+		hits = append(hits, got...)
 	}
 
-	for _, f := range findings {
-		fmt.Fprintln(out, f.String())
+	if emitErr := emitFindings(out, format, hits); emitErr != nil {
+		return exitcode.ToolFailure, fmt.Errorf("emit findings: %w", emitErr)
 	}
 
-	if len(findings) > 0 {
-		fmt.Fprintf(errOut, "malscan: %d finding(s) across %d module(s)\n", len(findings), len(mods))
-		return exitFindings, nil
+	if len(hits) > 0 {
+		fmt.Fprintf(errOut, "malscan: %d finding(s) across %d module(s)\n", len(hits), len(mods))
+		return exitcode.Findings, nil
 	}
 	fmt.Fprintf(errOut, "malscan: scanned %d module(s), no findings\n", len(mods))
-	return exitOK, nil
+	return exitcode.OK, nil
+}
+
+func emitFindings(out io.Writer, format string, hits []finding) error {
+	switch format {
+	case "text":
+		return emitText(out, hits)
+	case "sarif":
+		return emitSARIF(out, hits)
+	default:
+		return fmt.Errorf("%w: %q", errUnknownFormat, format)
+	}
+}
+
+func emitText(out io.Writer, hits []finding) error {
+	for _, f := range hits {
+		if err := findings.WriteText(
+			out,
+			findings.LevelError,
+			toolName,
+			ruleID,
+			f.module,
+			f.version,
+			f.props(),
+		); err != nil {
+			return fmt.Errorf("emit text finding for %s: %w", f.module, err)
+		}
+	}
+	return nil
+}
+
+func emitSARIF(out io.Writer, hits []finding) error {
+	run := findings.NewRun(toolName)
+	run.AddRule(ruleID).
+		WithDescription("Module appears in the OSV malicious-package registry").
+		WithHelpURI("https://github.com/ossf/malicious-packages")
+	for _, f := range hits {
+		findings.AddResult(run, ruleID, findings.LevelError, f.message(), f.module, f.version, f.props())
+	}
+	if err := findings.WriteSARIF(out, run); err != nil {
+		return fmt.Errorf("emit sarif: %w", err)
+	}
+	return nil
 }
 
 func evaluateModule(ctx context.Context, client *osv.Client, mod vendormod.Module) ([]finding, error) {
