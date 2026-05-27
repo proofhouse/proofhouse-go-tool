@@ -125,6 +125,10 @@ format-go *args:
 format-markdown *args:
     rumdl fmt {{ if args == "" { "." } else { args } }}
 
+# Format JSON / JS / TS files in place via biome's formatter.
+format-config *args:
+    biome format --write {{ if args == "" { "." } else { args } }}
+
 # --- Fix ---
 
 # Fix Go linting issues. `go fix` (Go 1.26+) runs the modernizer analyzers;
@@ -148,7 +152,7 @@ fix-markdown *args:
 # Run every linter that operates on the source tree. Aggregator.
 # Config, spelling, and workflow linters land on their own dedicated
 # targets and join this recipe as they arrive.
-lint: lint-go lint-go-modernize lint-go-deadcode lint-go-arch lint-prose lint-spelling lint-markdown
+lint: lint-go lint-go-modernize lint-go-deadcode lint-go-arch lint-prose lint-spelling lint-markdown lint-config
 
 # Run Go linters (golangci-lint via the pinned Docker image, vendor-mode).
 # --modules-download-mode=vendor matches `just build`, so the linter sees
@@ -219,6 +223,12 @@ lint-spelling *args:
 # code fence style); vale handles prose.
 lint-markdown *args:
     rumdl check {{ if args == "" { "." } else { args } }}
+
+# Lint JSON / JS / TS files via biome. Recommended ruleset, biome's
+# own formatter; covers config files (biome.json, package.json, tsconfig)
+# and any future scripts under .github/actions/ or tools/.
+lint-config *args:
+    biome check --files-ignore-unknown=true {{ if args == "" { "." } else { args } }}
 
 # --- Test ---
 
