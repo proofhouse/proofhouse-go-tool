@@ -300,6 +300,17 @@ gitleaks:
 depscan:
     go run ./tools/depscan
 
+# Scan each vendored module against the OSV malicious-package
+# registry (S2C2F ING-3). malscan parses vendor/modules.txt for the
+# enumerated module set, queries the OSV /v1/query endpoint per
+# entry, and reports any advisory whose ID starts with MAL- — the
+# prefix the OSSF malicious-packages dataset uses for malware
+# reports. Findings list the module, pinned version, advisory ID,
+# and summary text. Exits 1 on findings, 2 on tool failure. Run
+# `just vendor` first when vendor/modules.txt is stale.
+malscan:
+    go run ./tools/malscan
+
 # --- Dependencies ---
 
 # Tidy go.mod

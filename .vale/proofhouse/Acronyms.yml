@@ -76,3 +76,5 @@ exceptions:
   - LLM
   - GPT
   - DCO
+  - GHSA
+  - MAL
