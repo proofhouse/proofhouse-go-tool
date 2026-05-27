@@ -120,6 +120,7 @@ ruleId
 vendormod
 [Vv]exgen
 [Vv]ulns?
+vulnsClient
 wrapcheck
 collectFindings
 defaultHTTPClient

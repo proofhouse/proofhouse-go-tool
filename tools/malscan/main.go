@@ -46,6 +46,13 @@ import (
 // programmatic matching and keeps wrapcheck and err113 quiet.
 var errUnknownFormat = errors.New("unknown -format (want text or sarif)")
 
+// vulnsClient abstracts the slice of [osv.Client] that the scanner
+// needs. Keeping run injectable lets the table-driven cases drive
+// every branch through a stub rather than an httptest server.
+type vulnsClient interface {
+	Query(ctx context.Context, pkg osv.Package, version string) ([]osv.Vulnerability, error)
+}
+
 const (
 	toolName = "malscan"
 	ruleID   = "malicious-package"
@@ -93,24 +100,36 @@ func (f finding) message() string {
 }
 
 func main() {
-	modroot := flag.String("modroot", "", "module root to scan (defaults to cwd)")
-	format := flag.String("format", "text", "output format: text or sarif")
-	flag.Parse()
-
-	rc, err := run(context.Background(), *modroot, *format, os.Stdout, os.Stderr)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "malscan: %v\n", err)
-	}
-	os.Exit(rc)
+	os.Exit(realMain(os.Args[1:], os.Stdout, os.Stderr))
 }
 
-func run(ctx context.Context, modroot, format string, out, errOut io.Writer) (int, error) {
+// realMain wraps the imperative flag-parsing and exit-code wiring
+// in a function that the test harness can drive. The split keeps
+// main itself trivial enough to verify by inspection and lets
+// mutation testing exercise the error-log branch via real
+// arguments and writers rather than the exit call.
+func realMain(args []string, out, errOut io.Writer) int {
+	fs := flag.NewFlagSet("malscan", flag.ContinueOnError)
+	fs.SetOutput(errOut)
+	modroot := fs.String("modroot", "", "module root to scan (defaults to cwd)")
+	format := fs.String("format", "text", "output format: text or sarif")
+	if err := fs.Parse(args); err != nil {
+		return exitcode.ToolFailure
+	}
+
+	rc, err := run(context.Background(), *modroot, *format, &osv.Client{}, out, errOut)
+	if err != nil {
+		fmt.Fprintf(errOut, "malscan: %v\n", err)
+	}
+	return rc
+}
+
+func run(ctx context.Context, modroot, format string, client vulnsClient, out, errOut io.Writer) (int, error) {
 	mods, err := vendormod.Read(modroot)
 	if err != nil {
 		return exitcode.ToolFailure, fmt.Errorf("read vendored modules: %w", err)
 	}
 
-	client := &osv.Client{}
 	var hits []finding
 	for _, mod := range mods {
 		got, lookupErr := evaluateModule(ctx, client, mod)
@@ -175,7 +194,7 @@ func emitSARIF(out io.Writer, hits []finding) error {
 	return nil
 }
 
-func evaluateModule(ctx context.Context, client *osv.Client, mod vendormod.Module) ([]finding, error) {
+func evaluateModule(ctx context.Context, client vulnsClient, mod vendormod.Module) ([]finding, error) {
 	vulns, err := client.Query(ctx, osv.Package{Name: mod.Path, Ecosystem: goEcosystem}, mod.Version)
 	if err != nil {
 		return nil, fmt.Errorf("lookup vulns: %w", err)
