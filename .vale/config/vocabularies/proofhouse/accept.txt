@@ -110,7 +110,9 @@ ROI
 depscan
 malscan
 modroot
+parseLine
 [Pp]kgsite
+vendormod
 [Vv]exgen
 [Vv]ulns?
 collectFindings

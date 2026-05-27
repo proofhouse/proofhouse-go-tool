@@ -21,15 +21,14 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"flag"
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
 
+	"github.com/proofhouse/proofhouse-go/tools/internal/vendormod"
 	"github.com/proofhouse/proofhouse-go/tools/malscan/osv"
 )
 
@@ -37,20 +36,6 @@ const (
 	exitOK          = 0
 	exitFindings    = 1
 	exitToolFailure = 2
-
-	// scannerInitialBufSize sizes the bufio.Scanner buffer for one
-	// vendor/modules.txt line. Lines almost never exceed 256 bytes;
-	// 64 KiB leaves comfortable headroom without over-allocating.
-	scannerInitialBufSize = 64 * 1024
-
-	// scannerMaxBufSize caps the buffer at 1 MiB so a malformed
-	// line can't make the scanner grow without bound.
-	scannerMaxBufSize = 1 << 20
-
-	// plainModuleFields names the two-field form "<path> <version>"
-	// that vendor/modules.txt uses for modules without a replace
-	// directive.
-	plainModuleFields = 2
 
 	// goEcosystem names the Go ecosystem in OSV requests.
 	goEcosystem = "Go"
@@ -60,14 +45,6 @@ const (
 	// malicious-packages dataset reserves this prefix.
 	maliciousIDPrefix = "MAL-"
 )
-
-// vendoredModule names one entry in vendor/modules.txt after the
-// parser resolves any replace directives. The struct keeps only the
-// fields the OSV lookup needs.
-type vendoredModule struct {
-	Path    string
-	Version string
-}
 
 // finding describes a single malicious-package hit. malscan only
 // reports advisories whose IDs use the MAL- prefix; vulnerability
@@ -103,9 +80,9 @@ func main() {
 }
 
 func run(ctx context.Context, modroot string, out, errOut io.Writer) (int, error) {
-	mods, err := enumerateModules(modroot)
+	mods, err := vendormod.Read(modroot)
 	if err != nil {
-		return exitToolFailure, err
+		return exitToolFailure, fmt.Errorf("read vendored modules: %w", err)
 	}
 
 	client := &osv.Client{}
@@ -131,78 +108,7 @@ func run(ctx context.Context, modroot string, out, errOut io.Writer) (int, error
 	return exitOK, nil
 }
 
-func enumerateModules(modroot string) ([]vendoredModule, error) {
-	path := filepath.Join(modroot, "vendor", "modules.txt")
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("open %s: %w", path, err)
-	}
-	defer f.Close()
-	mods, err := parseModulesTxt(f)
-	if err != nil {
-		return nil, fmt.Errorf("parse %s: %w", path, err)
-	}
-	return mods, nil
-}
-
-// parseModulesTxt reads the well-defined vendor/modules.txt format
-// described in the [Go vendoring reference]. Lines that begin with
-// "# " declare a module and its version, optionally followed by a
-// replace directive ("=> path" or "=> path version"). Lines starting
-// with "## " carry sub-metadata that the tool ignores. Other lines
-// list package paths inside the most recent module and don't affect
-// enumeration.
-//
-// [Go vendoring reference]: https://go.dev/ref/mod#vendoring
-func parseModulesTxt(r io.Reader) ([]vendoredModule, error) {
-	var mods []vendoredModule
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 0, scannerInitialBufSize), scannerMaxBufSize)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if !strings.HasPrefix(line, "# ") || strings.HasPrefix(line, "## ") {
-			continue
-		}
-		mod, ok := parseModuleLine(strings.TrimPrefix(line, "# "))
-		if !ok {
-			continue
-		}
-		mods = append(mods, mod)
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("scan: %w", err)
-	}
-	return mods, nil
-}
-
-// parseModuleLine parses one declaration after the caller strips
-// the "# " prefix. Returns a false second return for replaced-to-local
-// modules and other shapes the parser can't handle. The caller drops
-// them.
-//
-// Recognized forms:
-//
-//	<path> <version>
-//	<path> <version> => <replacement-path>
-//	<path> <version> => <replacement-path> <replacement-version>
-//	<path> => <replacement-path> <replacement-version>
-func parseModuleLine(line string) (vendoredModule, bool) {
-	fields := strings.Fields(line)
-	switch {
-	case len(fields) >= 4 && fields[len(fields)-3] == "=>":
-		// Path replaced to module path + version.
-		return vendoredModule{Path: fields[len(fields)-2], Version: fields[len(fields)-1]}, true
-	case len(fields) >= 3 && fields[len(fields)-2] == "=>":
-		// Path replaced to a local directory (no version follows).
-		return vendoredModule{}, false
-	case len(fields) == plainModuleFields:
-		return vendoredModule{Path: fields[0], Version: fields[1]}, true
-	default:
-		return vendoredModule{}, false
-	}
-}
-
-func evaluateModule(ctx context.Context, client *osv.Client, mod vendoredModule) ([]finding, error) {
+func evaluateModule(ctx context.Context, client *osv.Client, mod vendormod.Module) ([]finding, error) {
 	vulns, err := client.Query(ctx, osv.Package{Name: mod.Path, Ecosystem: goEcosystem}, mod.Version)
 	if err != nil {
 		return nil, fmt.Errorf("lookup vulns: %w", err)
@@ -214,7 +120,7 @@ func evaluateModule(ctx context.Context, client *osv.Client, mod vendoredModule)
 // advisory whose ID uses the MAL- prefix. Other advisory prefixes
 // (GO-, GHSA-, CVE-) describe regular vulnerabilities rather than
 // malware reports and belong to the govulncheck recipe.
-func collectFindings(mod vendoredModule, vulns []osv.Vulnerability) []finding {
+func collectFindings(mod vendormod.Module, vulns []osv.Vulnerability) []finding {
 	var hits []finding
 	for _, v := range vulns {
 		if !strings.HasPrefix(v.ID, maliciousIDPrefix) {

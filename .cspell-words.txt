@@ -4,6 +4,7 @@ commitlint
 gomodcache
 mktemp
 moby
+modload
 mtimes
 orbstack
 osxkeychain
@@ -101,6 +102,7 @@ CLI
 cli
 fe3dback
 modroot
+vendormod
 vexgen
 vulns
 asasalint
