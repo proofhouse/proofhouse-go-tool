@@ -134,6 +134,11 @@ fix-go *args:
 
 # --- Lint ---
 
+# Run all Go-side linters. Aggregator. Prose, config, and workflow
+# linters land on their own dedicated targets and get added to this
+# recipe (or a `lint` super-aggregator) as they arrive.
+lint: lint-go lint-go-modernize lint-go-deadcode lint-go-arch
+
 # Run Go linters (golangci-lint via the pinned Docker image, vendor-mode).
 # --modules-download-mode=vendor matches `just build`, so the linter sees
 # exactly the dependency set the compiler does and never falls back to
