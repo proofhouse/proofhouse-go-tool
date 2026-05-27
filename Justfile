@@ -195,6 +195,14 @@ lint-go-arch:
 test *args:
     go test ./... "$@"
 
+# Run tests with race detector. Slower than plain `just test`; pairs
+# with goroutine-bearing code as it lands. Native fuzz targets discovered
+# by the nightly workflow rerun under `-race` automatically when their
+# function-under-test is reached from `-race` builds; for ad-hoc local
+# runs use this recipe.
+test-race:
+    go test -race ./...
+
 # --- Dependencies ---
 
 # Tidy go.mod
