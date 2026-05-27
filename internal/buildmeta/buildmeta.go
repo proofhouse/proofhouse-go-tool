@@ -3,13 +3,13 @@
 
 // Package buildmeta carries build-time information injected via ldflags, with
 // a fallback that consults the runtime/debug build info when no ldflags apply
-// (such as `go install` directly from source).
+// (such as go install directly from source).
 package buildmeta
 
 import "runtime/debug"
 
 // Build-time variables. The Justfile and goreleaser config both set these via
-// `-ldflags "-X github.com/proofhouse/proofhouse-go/internal/buildmeta.<Var>=<value>"`.
+// -ldflags "-X github.com/proofhouse/proofhouse-go/internal/buildmeta.<Var>=<value>".
 // The defaults below apply when the build passes no ldflags.
 //
 //nolint:gochecknoglobals // ldflags -X can only patch package-level vars

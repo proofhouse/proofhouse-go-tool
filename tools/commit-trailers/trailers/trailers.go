@@ -6,20 +6,20 @@
 // AI coding-assistants policy at
 // https://docs.kernel.org/process/coding-assistants.html, with one
 // override: the kernel forbids AI assistants from adding their own
-// `Signed-off-by:` trailer; this repo allows it because the human
+// Signed-off-by trailer; this repo allows it because the human
 // committer remains responsible for the DCO regardless.
 //
-// Rule 1: When the commit message carries an `Assisted-by:` trailer,
+// Rule 1: When the commit message carries an Assisted-by trailer,
 // the value must match the kernel-style format
-// `AGENT_NAME:MODEL_VERSION [TOOL1] [TOOL2]`. The colon separates
+// AGENT_NAME:MODEL_VERSION [TOOL1] [TOOL2]. The colon separates
 // agent from model. Tool names follow whitespace-separated.
 //
-// Rule 2: When both `Assisted-by:` and `Signed-off-by:` appear, the
-// `Assisted-by:` trailer must come first.
+// Rule 2: When both Assisted-by and Signed-off-by appear, the
+// Assisted-by trailer must come first.
 //
-// Rule 3: A `Co-authored-by:` trailer attributing the work to a known
-// LLM gets rejected. LLM attribution belongs in `Assisted-by:`.
-// Human co-authors via `Co-authored-by:` remain valid.
+// Rule 3: A Co-authored-by trailer attributing the work to a known
+// LLM gets rejected. LLM attribution belongs in Assisted-by.
+// Human co-authors via Co-authored-by remain valid.
 package trailers
 
 import (
