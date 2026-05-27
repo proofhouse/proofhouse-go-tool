@@ -205,7 +205,11 @@ unparam
 usestdlibvars
 usetesting
 wastedassign
+worktree
+Worktree
+worktreeinclude
 worktrees
+Worktrees
 wrapcheck
 yamllintignore
 shellcheck

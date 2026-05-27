@@ -3,6 +3,7 @@ tmp/
 .env
 .env.*
 !.env.example
+mise.local.toml
 
 # Go build output
 bin/
