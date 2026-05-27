@@ -1,3 +1,9 @@
+# github.com/MakeNowJust/heredoc v1.0.0
+## explicit; go 1.12
+github.com/MakeNowJust/heredoc
+# github.com/bluekeyes/go-gitdiff v0.8.1
+## explicit; go 1.21
+github.com/bluekeyes/go-gitdiff/gitdiff
 # github.com/conventionalcommit/commitlint v0.12.0
 ## explicit; go 1.24.0
 github.com/conventionalcommit/commitlint
@@ -19,35 +25,107 @@ github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/fatih/color v1.18.0
+## explicit; go 1.17
+github.com/fatih/color
+# github.com/fsnotify/fsnotify v1.9.0
+## explicit; go 1.17
+github.com/fsnotify/fsnotify
+github.com/fsnotify/fsnotify/internal
+# github.com/go-gremlins/gremlins v0.6.0
+## explicit; go 1.25
+github.com/go-gremlins/gremlins/cmd
+github.com/go-gremlins/gremlins/cmd/gremlins
+github.com/go-gremlins/gremlins/cmd/internal/flags
+github.com/go-gremlins/gremlins/internal/configuration
+github.com/go-gremlins/gremlins/internal/coverage
+github.com/go-gremlins/gremlins/internal/diff
+github.com/go-gremlins/gremlins/internal/engine
+github.com/go-gremlins/gremlins/internal/engine/workdir
+github.com/go-gremlins/gremlins/internal/engine/workerpool
+github.com/go-gremlins/gremlins/internal/exclusion
+github.com/go-gremlins/gremlins/internal/execution
+github.com/go-gremlins/gremlins/internal/gomodule
+github.com/go-gremlins/gremlins/internal/log
+github.com/go-gremlins/gremlins/internal/mutator
+github.com/go-gremlins/gremlins/internal/report
+github.com/go-gremlins/gremlins/internal/report/internal
+# github.com/go-viper/mapstructure/v2 v2.4.0
+## explicit; go 1.18
+github.com/go-viper/mapstructure/v2
+github.com/go-viper/mapstructure/v2/internal/errors
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
+# github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
+## explicit; go 1.11
+github.com/hako/durafmt
 # github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
+# github.com/mattn/go-colorable v0.1.14
+## explicit; go 1.18
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.20
+## explicit; go 1.15
+github.com/mattn/go-isatty
+# github.com/mitchellh/go-homedir v1.1.0
+## explicit
+github.com/mitchellh/go-homedir
 # github.com/owenrumney/go-sarif/v3 v3.3.0
 ## explicit; go 1.24
 github.com/owenrumney/go-sarif/v3/pkg/report
 github.com/owenrumney/go-sarif/v3/pkg/report/utils
 github.com/owenrumney/go-sarif/v3/pkg/report/v210/sarif
 github.com/owenrumney/go-sarif/v3/pkg/report/v22/sarif
+# github.com/pelletier/go-toml/v2 v2.2.4
+## explicit; go 1.21.0
+github.com/pelletier/go-toml/v2
+github.com/pelletier/go-toml/v2/internal/characters
+github.com/pelletier/go-toml/v2/internal/danger
+github.com/pelletier/go-toml/v2/internal/tracker
+github.com/pelletier/go-toml/v2/unstable
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
 # github.com/russross/blackfriday/v2 v2.1.0
 ## explicit
 github.com/russross/blackfriday/v2
+# github.com/sagikazarmark/locafero v0.12.0
+## explicit; go 1.23.0
+github.com/sagikazarmark/locafero
+github.com/sagikazarmark/locafero/internal/queue
+# github.com/spf13/afero v1.15.0
+## explicit; go 1.23.0
+github.com/spf13/afero
+github.com/spf13/afero/internal/common
+github.com/spf13/afero/mem
+# github.com/spf13/cast v1.10.0
+## explicit; go 1.21.0
+github.com/spf13/cast
+github.com/spf13/cast/internal
 # github.com/spf13/cobra v1.10.2
 ## explicit; go 1.15
 github.com/spf13/cobra
-# github.com/spf13/pflag v1.0.9
+# github.com/spf13/pflag v1.0.10
 ## explicit; go 1.12
 github.com/spf13/pflag
+# github.com/spf13/viper v1.21.0
+## explicit; go 1.23.0
+github.com/spf13/viper
+github.com/spf13/viper/internal/encoding/dotenv
+github.com/spf13/viper/internal/encoding/json
+github.com/spf13/viper/internal/encoding/toml
+github.com/spf13/viper/internal/encoding/yaml
+github.com/spf13/viper/internal/features
 # github.com/stretchr/testify v1.11.1
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
+# github.com/subosito/gotenv v1.6.0
+## explicit; go 1.18
+github.com/subosito/gotenv
 # github.com/urfave/cli/v2 v2.27.7
 ## explicit; go 1.18
 github.com/urfave/cli/v2
@@ -63,6 +141,9 @@ github.com/xeipuuv/gojsonschema
 # github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342
 ## explicit; go 1.15
 github.com/xrash/smetrics
+# go.yaml.in/yaml/v3 v3.0.4
+## explicit; go 1.16
+go.yaml.in/yaml/v3
 # golang.org/x/mod v0.36.0
 ## explicit; go 1.25.0
 golang.org/x/mod/semver
@@ -71,6 +152,7 @@ golang.org/x/mod/semver
 golang.org/x/sync/errgroup
 # golang.org/x/sys v0.44.0
 ## explicit; go 1.25.0
+golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/telemetry v0.0.0-20260508192327-42602be52be6
 ## explicit; go 1.25.0
@@ -83,9 +165,20 @@ golang.org/x/telemetry/internal/crashmonitor
 golang.org/x/telemetry/internal/mmap
 golang.org/x/telemetry/internal/telemetry
 golang.org/x/telemetry/internal/upload
+# golang.org/x/text v0.31.0
+## explicit; go 1.24.0
+golang.org/x/text/encoding
+golang.org/x/text/encoding/internal
+golang.org/x/text/encoding/internal/identifier
+golang.org/x/text/encoding/unicode
+golang.org/x/text/internal/utf8internal
+golang.org/x/text/runes
+golang.org/x/text/transform
+golang.org/x/text/unicode/norm
 # golang.org/x/tools v0.45.0
 ## explicit; go 1.25.0
 golang.org/x/tools/cmd/deadcode
+golang.org/x/tools/cover
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/ast/edge
 golang.org/x/tools/go/ast/inspector

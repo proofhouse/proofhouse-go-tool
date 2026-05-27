@@ -268,6 +268,33 @@ test *args:
 test-race:
     go test -race ./...
 
+# Run mutation testing via gremlins. Gremlins mutates expressions in
+# the source under [path] (default the current directory), rebuilds
+# the package, and re-runs the tests against each mutation. Each
+# mutant comes back as KILLED (a test failed, meaning the test suite
+# caught the change), LIVED (no test failed, meaning the suite
+# missed the change), NOT COVERED (no test reaches the mutated line),
+# or NOT VIABLE (mutation broke the build). LIVED and NOT COVERED
+# mutants point at assertion gaps that line-coverage metrics miss.
+#
+# This is the inner-loop form. Pass a sub-package path to scope the
+# run for fast iteration, the same way `go test` accepts a package
+# argument. Run without arguments to mutate the whole module from
+# the current directory. A later workflow under `.github/workflows/`
+# will invoke the full-module form on a nightly schedule.
+#
+# Pinned as a `go tool` dep in go.mod so the mutator catalog is
+# reproducible across machines and bumps land as reviewable diffs.
+mutate *args:
+    go tool gremlins unleash {{ if args == "" { "." } else { args } }}
+
+# Mutate the whole module from the repository root. This is the
+# nightly form, factored out so the future `mutation-nightly.yml`
+# workflow has a single recipe to invoke and contributors can run
+# the same scan locally before opening a release-bound PR.
+mutate-all:
+    go tool gremlins unleash .
+
 # --- Security ---
 
 # Scan the module for known vulnerabilities reachable from the binary
