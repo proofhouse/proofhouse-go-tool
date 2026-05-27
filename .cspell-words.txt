@@ -213,3 +213,7 @@ sumdb
 stripspace
 sed
 coreutils
+esac
+msvc
+bsdtar
+matrixed
