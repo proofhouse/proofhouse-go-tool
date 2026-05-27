@@ -130,7 +130,7 @@ run *args:
 
 # Clean build artifacts
 clean:
-    rm -rf {{ bin_dir }} dist coverage.out coverage.html coverage.txt
+    rm -rf {{ bin_dir }} dist coverage.out coverage.html coverage.txt coverage.xml
 
 # --- Format ---
 
@@ -305,6 +305,43 @@ mutate *args:
 # the same scan locally before opening a release-bound PR.
 mutate-all:
     go tool gremlins unleash --timeout-coefficient {{ gremlins_timeout_coefficient }} .
+
+# Run tests with coverage, print the per-function breakdown, and
+# enforce the project thresholds documented in `.testcoverage.yml`.
+# This is the inner-loop coverage gate. Pair with `just mutate
+# <path>` when adding tests against survivor mutants. The total
+# threshold remains intentionally lower than today's measured
+# coverage so a contributor can land a feature with a few new
+# uncovered lines and tighten coverage in a follow-up.
+cover:
+    go test -coverprofile=coverage.out ./...
+    @echo
+    go tool cover -func=coverage.out | tail -n 30
+    @echo
+    go tool go-test-coverage --config .testcoverage.yml
+
+# Open the HTML coverage report. Highlights covered and uncovered
+# regions in source view so a contributor can find exactly where a
+# new test should land. Wraps `go tool cover -html`.
+cover-html:
+    go test -coverprofile=coverage.out ./...
+    go tool cover -html=coverage.out
+
+# Emit a Cobertura XML report for downstream consumers (CI coverage
+# upload, Codecov, GitLab Pages reports). Cobertura is the lingua
+# franca format that most coverage dashboards accept, including the
+# `actions/upload-code-coverage` action a later workflow under
+# `.github/workflows/` invokes.
+cover-cobertura:
+    go test -coverprofile=coverage.out ./...
+    go tool gocover-cobertura < coverage.out > coverage.xml
+
+# Run only the threshold gate against an existing coverage.out. The
+# bare check separates a CI step that runs tests itself from the
+# threshold enforcement, and gives a contributor a way to re-check
+# after editing `.testcoverage.yml` without rerunning the suite.
+cover-check:
+    go tool go-test-coverage --config .testcoverage.yml
 
 # --- Security ---
 

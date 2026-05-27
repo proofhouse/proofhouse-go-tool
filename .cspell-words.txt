@@ -106,9 +106,13 @@ modroot
 dedupe
 exitcode
 logfmt
+gocover
+boumenot
 owenrumney
 pflag
 ruleid
+testcoverage
+vladopajic
 vendormod
 vexgen
 vulns

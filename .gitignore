@@ -10,6 +10,7 @@ bin/
 coverage.out
 coverage.html
 coverage.txt
+coverage.xml
 
 # Test outputs
 testdata/fuzz/

@@ -1,6 +1,7 @@
 agentic
 [Aa]llowlist
 [Cc]i
+[Cc]obertura
 [Cc]ommitlint
 errOut
 msg
