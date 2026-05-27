@@ -122,6 +122,8 @@ vendormod
 [Vv]ulns?
 vulnsClient
 wrapcheck
+assistedAt
+checkOrder
 collectFindings
 defaultHTTPClient
 defaultTimeout
@@ -143,6 +145,7 @@ queryResponse
 querybatch
 realMain
 resolveVersion
+signedAt
 vendoredModule
 versionsCase
 versionsClient

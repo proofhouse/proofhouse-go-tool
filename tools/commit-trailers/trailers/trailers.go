@@ -121,13 +121,16 @@ func checkOrder(msg string) error {
 // of the first Assisted-by and Signed-off-by trailers. Returns -1 for
 // either when absent. The first return holds the Assisted-by index;
 // the second holds the Signed-off-by index.
+//
+// Using an if/else chain rather than a switch-true form keeps each
+// predicate inside a statement block that Go's coverage profile can
+// attach a count to, so mutation testing can drive both branches.
 func scan(msg string) (int, int) {
 	assistedAt, signedAt := -1, -1
 	for i, line := range strings.Split(msg, "\n") {
-		switch {
-		case assistedAt == -1 && strings.HasPrefix(line, assistedByToken):
+		if assistedAt == -1 && strings.HasPrefix(line, assistedByToken) {
 			assistedAt = i
-		case signedAt == -1 && strings.HasPrefix(line, signedOffByToken):
+		} else if signedAt == -1 && strings.HasPrefix(line, signedOffByToken) {
 			signedAt = i
 		}
 	}

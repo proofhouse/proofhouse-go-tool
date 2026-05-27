@@ -131,3 +131,89 @@ Assisted-by: claude-code/opus-4.7
 		})
 	}
 }
+
+// TestCheckErrorMessagesIncludeLineNumbers pins the 1-based line
+// numbers that each error message reports. Mutation testing flips
+// the `i+1` and `assistedAt+1`/`signedAt+1` arithmetic in the
+// formatters; asserting on the literal "line N" text in the error
+// surfaces those mutations.
+func TestCheckErrorMessagesIncludeLineNumbers(t *testing.T) {
+	t.Parallel()
+
+	t.Run("ErrAssistedByFormat reports the trailer's 1-based line", func(t *testing.T) {
+		t.Parallel()
+		msg := "feat: add thing\n\nAssisted-by: claude-code/opus-4.7\n"
+		err := trailers.Check(msg)
+		require.Error(t, err)
+		// The Assisted-by trailer sits at index 2, so the message
+		// reports "line 3" after the 1-based offset.
+		assert.Contains(t, err.Error(), `line 3: "claude-code/opus-4.7"`)
+	})
+
+	t.Run("ErrCoAuthoredByForbiddenLLM reports the trailer's 1-based line", func(t *testing.T) {
+		t.Parallel()
+		msg := "fix: x\n\n\nCo-authored-by: Claude <noreply@anthropic.com>\n" +
+			"Signed-off-by: Tony Burns <tony@tonyburns.net>\n"
+		err := trailers.Check(msg)
+		require.Error(t, err)
+		// Co-authored-by sits at index 3, so the message reports
+		// "line 4" after the 1-based offset.
+		assert.Contains(t, err.Error(), `line 4: "Claude <noreply@anthropic.com>"`)
+	})
+
+	t.Run("ErrTrailerOrder reports both 1-based line numbers", func(t *testing.T) {
+		t.Parallel()
+		msg := "feat: add thing\n\nSigned-off-by: Tony Burns <tony@tonyburns.net>\n" +
+			"Assisted-by: claude-code:opus-4.7\n"
+		err := trailers.Check(msg)
+		require.Error(t, err)
+		// Signed-off-by sits at index 2 (line 3); Assisted-by at
+		// index 3 (line 4). The message reports both in order.
+		assert.Contains(t, err.Error(), "line 4 after line 3")
+	})
+}
+
+// TestCheckOrderRulesOutAdjacentTrailers pins behavior under two
+// edge cases: an Assisted-by trailer alone (no Signed-off-by) and
+// an out-of-order pair sitting on adjacent lines just after the
+// subject. The cases drive the -1 sentinel comparisons in
+// checkOrder through inputs that distinguish them from the
+// majority-case message shape the rest of the table uses.
+func TestCheckOrderRulesOutAdjacentTrailers(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Assisted-by alone returns no error", func(t *testing.T) {
+		t.Parallel()
+		msg := "feat: add thing\n\nAssisted-by: claude-code:opus-4.7\n"
+		assert.NoError(t, trailers.Check(msg))
+	})
+
+	t.Run("out-of-order trailers on the lines just after the subject", func(t *testing.T) {
+		t.Parallel()
+		// Signed-off-by on line 2 (index 1), Assisted-by on line 3
+		// (index 2). The order rule should fire.
+		msg := "feat: add thing\nSigned-off-by: Tony Burns <tony@tonyburns.net>\n" +
+			"Assisted-by: claude-code:opus-4.7\n"
+		err := trailers.Check(msg)
+		require.Error(t, err)
+		require.ErrorIs(t, err, trailers.ErrTrailerOrder)
+		assert.Contains(t, err.Error(), "line 3 after line 2")
+	})
+
+	// Signed-off-by on the subject line (index 0) and Assisted-by on
+	// the next line (index 1) drive assistedAt past the 1 boundary
+	// the -1 sentinel comparisons would land on under mutation. A
+	// commit shaped this way wouldn't ship through prek, but the
+	// in-memory message exercises Check directly so the comparison
+	// against the 1 mutant produces a different exit than the
+	// original -1 check.
+	t.Run("subject-line Signed-off-by with Assisted-by next", func(t *testing.T) {
+		t.Parallel()
+		msg := "Signed-off-by: Tony Burns <tony@tonyburns.net>\n" +
+			"Assisted-by: claude-code:opus-4.7\n"
+		err := trailers.Check(msg)
+		require.Error(t, err)
+		require.ErrorIs(t, err, trailers.ErrTrailerOrder)
+		assert.Contains(t, err.Error(), "line 2 after line 1")
+	})
+}
