@@ -34,7 +34,9 @@ golines
 gopath
 goreleaser
 gosec
+callgraph
 govulncheck
+vta
 ldflags
 maratori
 mvdan

@@ -268,6 +268,17 @@ test *args:
 test-race:
     go test -race ./...
 
+# --- Security ---
+
+# Scan the module for known vulnerabilities reachable from the binary
+# entry points. govulncheck walks the call graph and reports only
+# vulnerabilities whose vulnerable symbols this module actually calls —
+# quieter than module-level scans and a closer match for what would
+# show up in production. Pinned as a `go tool` dep in go.mod so the
+# scanner version is reproducible across machines; bumped via Renovate.
+vuln:
+    go tool govulncheck ./...
+
 # --- Dependencies ---
 
 # Tidy go.mod

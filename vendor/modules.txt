@@ -73,7 +73,11 @@ golang.org/x/tools/go/ast/edge
 golang.org/x/tools/go/ast/inspector
 golang.org/x/tools/go/buildutil
 golang.org/x/tools/go/callgraph
+golang.org/x/tools/go/callgraph/cha
+golang.org/x/tools/go/callgraph/internal/chautil
 golang.org/x/tools/go/callgraph/rta
+golang.org/x/tools/go/callgraph/vta
+golang.org/x/tools/go/callgraph/vta/internal/trie
 golang.org/x/tools/go/gcexportdata
 golang.org/x/tools/go/internal/cgo
 golang.org/x/tools/go/loader
@@ -95,6 +99,25 @@ golang.org/x/tools/internal/stdlib
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
+# golang.org/x/vuln v1.3.0
+## explicit; go 1.25.0
+golang.org/x/vuln/cmd/govulncheck
+golang.org/x/vuln/internal
+golang.org/x/vuln/internal/buildinfo
+golang.org/x/vuln/internal/client
+golang.org/x/vuln/internal/derrors
+golang.org/x/vuln/internal/gosym
+golang.org/x/vuln/internal/goversion
+golang.org/x/vuln/internal/govulncheck
+golang.org/x/vuln/internal/openvex
+golang.org/x/vuln/internal/osv
+golang.org/x/vuln/internal/sarif
+golang.org/x/vuln/internal/scan
+golang.org/x/vuln/internal/semver
+golang.org/x/vuln/internal/traces
+golang.org/x/vuln/internal/vulncheck
+golang.org/x/vuln/internal/web
+golang.org/x/vuln/scan
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
