@@ -1,4 +1,5 @@
 brew "biome"
+brew "cocogitto"
 brew "cspell"
 brew "go"
 brew "just"
