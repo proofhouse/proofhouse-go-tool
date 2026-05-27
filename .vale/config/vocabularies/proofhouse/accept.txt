@@ -150,3 +150,4 @@ signedAt
 vendoredModule
 versionsCase
 versionsClient
+[Aa]ctionlint

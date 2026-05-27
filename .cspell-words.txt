@@ -208,3 +208,4 @@ wastedassign
 worktrees
 wrapcheck
 yamllintignore
+shellcheck
