@@ -1,6 +1,7 @@
 agentic
 [Aa]llowlist
 [Cc]i
+[Pp]roofhouse
 [Bb]uildx
 [Bb]uildmeta
 [Bb]uildType

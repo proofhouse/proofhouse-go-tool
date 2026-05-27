@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Authors of Proofhouse
 
-// Command proofhouse-go is the reference binary for the Proofhouse Go
-// reference repository. The binary itself is intentionally minimal — its
-// purpose is to give the repository something to build, sign, and release
-// so the surrounding gates have a target to operate on. The value of this
-// repository sits in the verification, supply-chain, and release plumbing
-// around the binary, not in the binary's own command surface.
+// Command proofhouse-go provides the reference binary for the Proofhouse
+// Go reference repository. The binary itself stays intentionally minimal;
+// its purpose: give the surrounding gates something to compile against
+// and ship through the release pipeline. The repository's value sits in
+// the supply chain plumbing around the binary, not in the binary's own
+// command surface.
 package main
 
 import (
