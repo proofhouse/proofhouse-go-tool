@@ -126,7 +126,9 @@ defaultHTTPClient
 defaultTimeout
 devel
 devFallback
+evaluateModule
 findingKind
+injectable
 goEcosystem
 HTTPClient
 httptest
@@ -138,6 +140,8 @@ queryCase
 queryRequest
 queryResponse
 querybatch
+realMain
 resolveVersion
 vendoredModule
 versionsCase
+versionsClient

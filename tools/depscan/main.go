@@ -47,6 +47,14 @@ const toolName = "depscan"
 // programmatic matching and keeps wrapcheck and err113 quiet.
 var errUnknownFormat = errors.New("unknown -format (want text or sarif)")
 
+// versionsClient abstracts the slice of [pkgsite.Client] that the
+// scanner needs. The interface keeps run injectable from tests, so
+// the table-driven cases that mutation testing relies on don't have
+// to stand up a real HTTP transport for every branch.
+type versionsClient interface {
+	Versions(ctx context.Context, module string) ([]pkgsite.ModuleVersion, error)
+}
+
 // findingKind enumerates the issue classes the tool reports. The
 // string value doubles as the SARIF ruleId.
 type findingKind string
@@ -102,24 +110,36 @@ func reasonSentence(r string) string {
 }
 
 func main() {
-	modroot := flag.String("modroot", "", "module root to scan (defaults to cwd)")
-	format := flag.String("format", "text", "output format: text or sarif")
-	flag.Parse()
-
-	rc, err := run(context.Background(), *modroot, *format, os.Stdout, os.Stderr)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "depscan: %v\n", err)
-	}
-	os.Exit(rc)
+	os.Exit(realMain(os.Args[1:], os.Stdout, os.Stderr))
 }
 
-func run(ctx context.Context, modroot, format string, out, errOut io.Writer) (int, error) {
+// realMain wraps the imperative flag-parsing and exit-code wiring
+// in a function that the test harness can drive. The split keeps
+// main itself trivial enough to verify by inspection and lets
+// mutation testing exercise the error-log branch via real arguments
+// and writers rather than os.Exit.
+func realMain(args []string, out, errOut io.Writer) int {
+	fs := flag.NewFlagSet("depscan", flag.ContinueOnError)
+	fs.SetOutput(errOut)
+	modroot := fs.String("modroot", "", "module root to scan (defaults to cwd)")
+	format := fs.String("format", "text", "output format: text or sarif")
+	if err := fs.Parse(args); err != nil {
+		return exitcode.ToolFailure
+	}
+
+	rc, err := run(context.Background(), *modroot, *format, &pkgsite.Client{}, out, errOut)
+	if err != nil {
+		fmt.Fprintf(errOut, "depscan: %v\n", err)
+	}
+	return rc
+}
+
+func run(ctx context.Context, modroot, format string, client versionsClient, out, errOut io.Writer) (int, error) {
 	mods, err := vendormod.Read(modroot)
 	if err != nil {
 		return exitcode.ToolFailure, fmt.Errorf("read vendored modules: %w", err)
 	}
 
-	client := &pkgsite.Client{}
 	var hits []finding
 	for _, mod := range mods {
 		got, lookupErr := evaluateModule(ctx, client, mod)
@@ -187,7 +207,7 @@ func emitSARIF(out io.Writer, hits []finding) error {
 	return nil
 }
 
-func evaluateModule(ctx context.Context, client *pkgsite.Client, mod vendormod.Module) ([]finding, error) {
+func evaluateModule(ctx context.Context, client versionsClient, mod vendormod.Module) ([]finding, error) {
 	versions, err := client.Versions(ctx, mod.Path)
 	if err != nil {
 		if errors.Is(err, pkgsite.ErrNotFound) {
