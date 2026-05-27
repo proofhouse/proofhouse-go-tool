@@ -30,7 +30,14 @@ repos:
   - repo: https://github.com/errata-ai/vale
     rev: f544f4923eb1c7d322c18e35f96333ef8ac29efa  # v3.13.1
     hooks:
+      # Scope the pre-commit-stage hook to Markdown files. Without
+      # this restriction, prek passes .git/COMMIT_EDITMSG (which has
+      # no extension) and vale parses it as plain text — code spans
+      # (`...`) stop suppressing rules like Google.Spacing, so dotted
+      # identifiers in backticks still get flagged. The commit-msg
+      # stage hook below handles the commit message with --ext=.md.
       - id: vale
+        types: [markdown]
       - id: vale
         name: vale (commit message)
         stages: [commit-msg]
