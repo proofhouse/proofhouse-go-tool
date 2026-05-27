@@ -8,6 +8,11 @@ package buildmeta
 
 import "runtime/debug"
 
+// devFallback holds the placeholder version stamped when no ldflags
+// and no runtime build info apply. resolveVersion treats it as a
+// signal to consult runtime/debug rather than as a real version.
+const devFallback = "DEV"
+
 // Build-time variables. The Justfile and goreleaser config both set these via
 // -ldflags "-X github.com/proofhouse/proofhouse-go/internal/buildmeta.<Var>=<value>".
 // The defaults below apply when the build passes no ldflags.
@@ -16,7 +21,7 @@ import "runtime/debug"
 var (
 	// Version holds the semantic version of the build. Set via ldflags, or
 	// resolved from the runtime/debug build info at init time.
-	Version = "DEV"
+	Version = devFallback
 
 	// Commit holds the short git SHA of the build.
 	Commit = ""
@@ -40,12 +45,27 @@ func Get() Info {
 
 //nolint:gochecknoinits // runtime/debug fallback runs once at process start
 func init() {
-	if Version != "DEV" {
-		return
+	Version = resolveVersion(Version, debug.ReadBuildInfo)
+}
+
+// resolveVersion produces the effective package Version from the
+// ldflags-supplied value and a callable that reads the runtime
+// build info. When ldflags pinned a non-default version, that
+// value wins. With the placeholder fallback in place, the runtime
+// build info supplies a module-derived version, except when the
+// reader reports the literal (devel) value. That literal leaves
+// the placeholder untouched so callers always see a non-empty
+// Version.
+//
+// The function takes readBuildInfo as a parameter so tests can
+// drive each branch directly without spawning a child process.
+func resolveVersion(ldflagsVersion string, readBuildInfo func() (*debug.BuildInfo, bool)) string {
+	if ldflagsVersion != devFallback {
+		return ldflagsVersion
 	}
-	info, ok := debug.ReadBuildInfo()
+	info, ok := readBuildInfo()
 	if !ok || info.Main.Version == "(devel)" {
-		return
+		return ldflagsVersion
 	}
-	Version = info.Main.Version
+	return info.Main.Version
 }

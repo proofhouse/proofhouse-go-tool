@@ -124,6 +124,8 @@ wrapcheck
 collectFindings
 defaultHTTPClient
 defaultTimeout
+devel
+devFallback
 findingKind
 goEcosystem
 HTTPClient
@@ -136,5 +138,6 @@ queryCase
 queryRequest
 queryResponse
 querybatch
+resolveVersion
 vendoredModule
 versionsCase
