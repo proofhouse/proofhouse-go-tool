@@ -137,7 +137,7 @@ fix-go *args:
 # Run every linter that operates on the source tree. Aggregator.
 # Config, spelling, and workflow linters land on their own dedicated
 # targets and join this recipe as they arrive.
-lint: lint-go lint-go-modernize lint-go-deadcode lint-go-arch lint-prose
+lint: lint-go lint-go-modernize lint-go-deadcode lint-go-arch lint-prose lint-spelling
 
 # Run Go linters (golangci-lint via the pinned Docker image, vendor-mode).
 # --modules-download-mode=vendor matches `just build`, so the linter sees
@@ -196,6 +196,12 @@ lint-go-arch:
 # inspected.
 lint-prose *args:
     vale --glob='!{LICENSE,CHANGELOG.md,.vale/*,tmp/*,vendor/*}' {{ if args == "" { "." } else { args } }}
+
+# Check spelling across the tree against the project dictionary at
+# .cspell-words.txt. cspell ignores binaries, generated files, and the
+# vendor/ tree via the ignorePaths block in .cspell.jsonc.
+lint-spelling *args:
+    cspell --config .cspell.jsonc --no-summary --no-progress --no-must-find-files {{ if args == "" { "." } else { args } }}
 
 # --- Test ---
 

@@ -1,0 +1,27 @@
+{
+  "language": "en",
+  "ignorePaths": [
+    "**/*.d.ts",
+    "**/*.log",
+    ".claude/worktrees/**/*",
+    ".rumdl_cache/**/*",
+    ".vale/**/*",
+    "coverage.json",
+    "coverage.xml",
+    "dist/**/*",
+    "go.mod",
+    "go.sum",
+    "LICENSE",
+    "node_modules/**/*",
+    "vendor/**/*",
+    "uv.lock"
+  ],
+  "dictionaryDefinitions": [
+    {
+      "name": "proofhouse",
+      "path": "./.cspell-words.txt",
+      "addWords": true
+    }
+  ],
+  "dictionaries": ["proofhouse"]
+}
