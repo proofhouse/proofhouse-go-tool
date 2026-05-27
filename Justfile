@@ -189,6 +189,14 @@ lint-go-deadcode-tests:
 lint-go-arch:
     {{ go_arch_lint }} check --project-path /app
 
+# Lint prose in Markdown files and source comments via vale. Glob
+# excludes the LICENSE (canonical Apache 2.0 text), the auto-generated
+# changelog, vale's own style packages, scratch dirs, and vendored
+# code; the per-file-type rules in .vale.ini decide what else gets
+# inspected.
+lint-prose *args:
+    vale --glob='!{LICENSE,CHANGELOG.md,.vale/*,tmp/*,vendor/*}' {{ if args == "" { "." } else { args } }}
+
 # --- Test ---
 
 # Run tests
@@ -240,3 +248,9 @@ version:
     @echo "Version: {{ version }}"
     @echo "Commit:  {{ commit }}"
     @echo "Date:    {{ date }}"
+
+# Sync Vale styles and dictionaries. Run once after cloning the repo,
+# and whenever .vale.ini's Packages list changes. CI runs this before
+# `just lint-prose`.
+vale-sync:
+    vale sync
