@@ -46,7 +46,15 @@ container_runtime := env("CONTAINER_RUNTIME", `bash -c '
 # and sandboxed environments can't always reach the helper binary).
 # PATH gets the runtime's directory prepended for cases where docker
 # itself isn't on the calling shell's PATH.
-golangci_lint := 'DOCKER_CONFIG="$(mktemp -d)" PATH="$(dirname ' + container_runtime + '):$PATH" ' + container_runtime + ' run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e GOLANGCI_LINT_CACHE=/tmp/golangci-lint-cache -v "$(go env GOMODCACHE):/go/pkg/mod" -v "$(pwd):/data" -w /data ' + golangci_lint_image + ' golangci-lint'
+#
+# GOTOOLCHAIN=local pins the container to the Go version baked into
+# the golangci-lint image, blocking the in-container toolchain
+# auto-download triggered by go.mod's `toolchain` directive. The
+# container has no write access to `/go/pkg/sumdb` for the download
+# verifier and no need to match the host toolchain at point-release
+# granularity — golangci-lint analyzers walk the AST, and point
+# releases ship no syntax changes.
+golangci_lint := 'DOCKER_CONFIG="$(mktemp -d)" PATH="$(dirname ' + container_runtime + '):$PATH" ' + container_runtime + ' run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e GOLANGCI_LINT_CACHE=/tmp/golangci-lint-cache -e GOTOOLCHAIN=local -v "$(go env GOMODCACHE):/go/pkg/mod" -v "$(pwd):/data" -w /data ' + golangci_lint_image + ' golangci-lint'
 
 # go-arch-lint version pin. Same Docker-pin pattern as golangci-lint:
 # the upstream image bundles the linter at a known version, and Renovate

@@ -209,3 +209,4 @@ worktrees
 wrapcheck
 yamllintignore
 shellcheck
+sumdb

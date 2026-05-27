@@ -151,3 +151,4 @@ vendoredModule
 versionsCase
 versionsClient
 [Aa]ctionlint
+[Ss]umdb
