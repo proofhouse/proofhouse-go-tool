@@ -1,6 +1,6 @@
 agentic
 [Aa]llowlist
-[Cc]i
+[Cc][Ii]
 [Cc]obertura
 [Cc]ommitlint
 errOut
