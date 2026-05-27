@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Authors of Proofhouse
 
-// Package vendormod enumerates the modules a project vendors. The
-// depscan and malscan tools call [Read] to load the dependency set
-// they need to audit; future scanners under tools/ share the parser
-// rather than carrying their own copy.
+// Package vendormod enumerates the modules a project vendors.
+// Both depscan and malscan call [Read] to load the dependency set
+// they need to audit, and future scanners under tools/ share the
+// parser rather than carrying their own copy.
 package vendormod
 
 import (
@@ -18,9 +18,11 @@ import (
 
 const (
 	// scannerInitialBufSize sizes the bufio.Scanner buffer for one
-	// vendor/modules.txt line. Lines almost never exceed 256 bytes;
-	// 64 KiB leaves comfortable headroom without over-allocating.
-	scannerInitialBufSize = 64 * 1024
+	// vendor/modules.txt line. Most lines fit in 256 bytes, so
+	// 64 KiB leaves comfortable headroom. The shift literal avoids
+	// an untestable arithmetic-base mutation position; bufio.Scanner
+	// grows its buffer up to scannerMaxBufSize regardless.
+	scannerInitialBufSize = 1 << 16
 
 	// scannerMaxBufSize caps the buffer at 1 MiB so a malformed
 	// line can't make the scanner grow without bound.
@@ -33,8 +35,8 @@ const (
 )
 
 // Module names one entry in vendor/modules.txt after the parser
-// resolves any replace directives. The struct keeps only the fields
-// downstream lookups need.
+// resolves any replace directives. Only the fields downstream
+// lookups need stay on the struct.
 type Module struct {
 	Path    string
 	Version string
@@ -59,10 +61,10 @@ func Read(modroot string) ([]Module, error) {
 // Parse reads the well-defined vendor/modules.txt format described
 // in the [Go vendoring reference]. Lines that begin with "# "
 // declare a module and its version, optionally followed by a
-// replace directive ("=> path" or "=> path version"). Lines
-// starting with "## " carry sub-metadata that the parser ignores.
-// Other lines list package paths inside the most recent module and
-// don't affect enumeration.
+// replace directive ("=> path" or "=> path version"). Two leading
+// hashes ("## ") flag sub-metadata that the parser ignores. Every
+// other line lists package paths inside the most recent module
+// and doesn't affect enumeration.
 //
 // [Go vendoring reference]: https://go.dev/ref/mod#vendoring
 func Parse(r io.Reader) ([]Module, error) {
@@ -88,25 +90,29 @@ func Parse(r io.Reader) ([]Module, error) {
 
 // parseLine parses one declaration after the caller strips the
 // "# " prefix. Returns a false second return for replaced-to-local
-// modules and other shapes the parser can't handle. The caller
-// drops them.
+// modules and other shapes the parser can't handle, leaving the
+// caller to drop them.
 //
-// Recognized forms:
+// Recognized forms with their resolved Module entry:
 //
-//	<path> <version>
-//	<path> <version> => <replacement-path>
-//	<path> <version> => <replacement-path> <replacement-version>
-//	<path> => <replacement-path> <replacement-version>
+//	<path> <version>                                       -> (path, version)
+//	<path> <version> => <replacement-path> <repl-version>  -> (repl-path, repl-version)
+//	<path> => <replacement-path> <replacement-version>     -> (repl-path, repl-version)
+//
+// Anything else (including replaced-to-local) falls through to
+// the trailing return, which yields the drop sentinel. Folding
+// the drop case into the trailing return avoids a dedicated
+// branch that would read as observationally identical and live
+// through mutation testing. The if/else chain rather than a
+// switch-true form keeps each predicate inside a statement block
+// that Go's coverage profile can attach a count to.
 func parseLine(line string) (Module, bool) {
 	fields := strings.Fields(line)
-	switch {
-	case len(fields) >= 4 && fields[len(fields)-3] == "=>":
+	if len(fields) >= 4 && fields[len(fields)-3] == "=>" {
 		return Module{Path: fields[len(fields)-2], Version: fields[len(fields)-1]}, true
-	case len(fields) >= 3 && fields[len(fields)-2] == "=>":
-		return Module{}, false
-	case len(fields) == plainModuleFields:
-		return Module{Path: fields[0], Version: fields[1]}, true
-	default:
-		return Module{}, false
 	}
+	if len(fields) == plainModuleFields {
+		return Module{Path: fields[0], Version: fields[1]}, true
+	}
+	return Module{}, false
 }
