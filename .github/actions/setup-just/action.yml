@@ -76,10 +76,14 @@ runs:
         esac
 
         if [[ "${RUNNER_OS}" == "Windows" ]]; then
-          mkdir -p "${HOME}/.local/bin"
-          install_path="${HOME}/.local/bin/just.exe"
+          install_dir="${HOME}/.local/bin"
+          mkdir -p "${install_dir}"
+          install_path="${install_dir}/just.exe"
           mv just.exe "${install_path}"
-          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          # Git Bash exports $HOME as a Unix-style path (/c/Users/...);
+          # subsequent PowerShell-driven `run:` steps need the Windows
+          # form for $GITHUB_PATH entries to resolve.
+          cygpath -w "${install_dir}" >> "${GITHUB_PATH}"
         else
           install_path="/usr/local/bin/just"
           install -m 0755 just "${install_path}"
