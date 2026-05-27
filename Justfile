@@ -312,6 +312,22 @@ version:
 vale-sync:
     vale sync
 
+# Run pre-commit hooks on changed files (the everyday invocation).
+prek:
+    prek
+
+# Run pre-commit hooks on every file in the tree. Useful after a
+# hook config change or before a release sweep.
+prek-all:
+    prek run --all-files
+
+# Install the project's pre-commit hooks (commit-msg, pre-commit,
+# pre-push). New contributors run this once after `just setup`; the
+# `just setup` recipe does NOT run it automatically because installing
+# hooks modifies .git/ and contributors may prefer to opt in.
+prek-install:
+    prek install -t commit-msg -t pre-commit -t pre-push
+
 # Generate the full CHANGELOG.md from Conventional Commit history.
 # `cog changelog` emits Markdown without an H1; the pipeline prepends
 # one and runs rumdl with MD024 (duplicate headings) disabled so
