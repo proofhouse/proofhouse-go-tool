@@ -108,10 +108,13 @@ format-go *args:
 
 # --- Fix ---
 
-# Fix Go linting issues. Runs `golangci-lint fmt` to apply formatter
-# rewrites, then `golangci-lint run --fix` to apply any auto-fixable
-# linter findings. Both invocations go through the pinned image.
+# Fix Go linting issues. `go fix` (Go 1.26+) runs the modernizer analyzers;
+# the blog post (https://go.dev/blog/gofix) recommends running it to a fixed
+# point — usually one extra pass picks up fixes that became valid after the
+# first round. golangci-lint fmt + --fix run afterward.
 fix-go *args:
+    go fix {{ if args == "" { "./..." } else { args } }}
+    go fix {{ if args == "" { "./..." } else { args } }}
     {{ golangci_lint }} fmt {{ args }}
     {{ golangci_lint }} run --fix --modules-download-mode=vendor {{ args }}
 
@@ -123,6 +126,17 @@ fix-go *args:
 # the module proxy.
 lint-go *args:
     {{ golangci_lint }} run --modules-download-mode=vendor {{ args }}
+
+# Fail if `go fix` would modernize anything. Mirrors the vendor-drift check:
+# contributors must run `just fix-go` before pushing.
+[script]
+lint-go-modernize:
+    diff_output=$(go fix -diff ./... 2>&1)
+    if [[ -n "$diff_output" ]]; then
+        echo "go fix would modernize the tree — run 'just fix-go' and commit:" >&2
+        echo "$diff_output" >&2
+        exit 1
+    fi
 
 # --- Test ---
 
