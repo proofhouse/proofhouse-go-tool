@@ -27,6 +27,7 @@ depguard
 embedpg
 [Ff]ormatter[s]?
 [Gg]itleaks
+golang
 golangci
 govulncheck
 gremlins
