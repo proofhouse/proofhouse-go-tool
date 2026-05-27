@@ -1,6 +1,7 @@
 brew "biome"
 brew "cocogitto"
 brew "cspell"
+brew "gitleaks"
 brew "go"
 brew "just"
 brew "prek"

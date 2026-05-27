@@ -279,6 +279,17 @@ test-race:
 vuln:
     go tool govulncheck ./...
 
+# Scan the working tree and the full git history for committed
+# secrets via gitleaks. `gitleaks git` walks every commit's diff
+# against the bundled regular-expression and entropy rule set;
+# findings name the file, line, commit, and matching rule so the
+# offending change can be located without re-running the scan.
+# Brew pins the binary in the Brewfile; the rule set advances with
+# `brew upgrade gitleaks`. A later workflow under `.github/workflows/`
+# re-runs the same scan on every PR.
+gitleaks:
+    gitleaks git --verbose .
+
 # --- Dependencies ---
 
 # Tidy go.mod
