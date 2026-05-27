@@ -65,6 +65,36 @@ clean:
 test *args:
     go test ./... "$@"
 
+# --- Dependencies ---
+
+# Tidy go.mod
+tidy:
+    go mod tidy
+
+# Verify dependencies
+verify:
+    go mod verify
+
+# Vendor dependencies into ./vendor. Vendoring makes new transitive
+# dependencies show up as a visible diff at PR review time, turning the
+# trust decision on each addition into a human one. The same pattern
+# Cilium uses for its open-source CI.
+vendor:
+    go mod tidy
+    go mod vendor
+
+# Check that vendor/, go.mod, and go.sum are in sync. CI runs this on
+# every PR; contributors run `just vendor` and commit the result.
+vendor-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    go mod tidy
+    go mod vendor
+    if ! git diff --exit-code -- go.mod go.sum vendor/; then
+        echo "vendor drift detected — run 'just vendor' and commit" >&2
+        exit 1
+    fi
+
 # --- Utilities ---
 
 # Print version information
