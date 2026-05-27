@@ -1,0 +1,45 @@
+# Local development
+tmp/
+.env
+.env.*
+!.env.example
+
+# Go build output
+bin/
+/proofhouse-go
+coverage.out
+coverage.html
+coverage.txt
+
+# Test outputs
+testdata/fuzz/
+
+# Linter caches
+.rumdl_cache/
+node_modules/
+.cspell-cache
+
+# goreleaser
+dist/
+
+# gremlins
+.gremlins/
+gremlins-report.json
+
+# Claude Code
+.claude/worktrees/
+.claude/settings.local.json
+
+# Vale synced packages (keep vocabulary and project styles).
+# Each negation needs the parent un-ignored first — git can't re-include
+# a child whose ancestor directory stays excluded.
+.vale/*
+!.vale/proofhouse/
+!.vale/config/
+.vale/config/*
+!.vale/config/vocabularies/
+.vale/config/vocabularies/*
+!.vale/config/vocabularies/proofhouse/
+
+# macOS
+.DS_Store

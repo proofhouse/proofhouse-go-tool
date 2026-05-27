@@ -1,0 +1,9 @@
+* text=auto eol=lf
+*.go text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+
+# Generated files — exclude from language stats and diff context.
+vendor/** linguist-vendored
+go.sum -diff
+*.lock -diff
