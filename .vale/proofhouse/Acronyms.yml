@@ -73,3 +73,6 @@ exceptions:
   - XSS
   - YAML
   - ZIP
+  - LLM
+  - GPT
+  - DCO

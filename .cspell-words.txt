@@ -1,4 +1,6 @@
 benchmem
+coccinelle
+commitlint
 gomodcache
 mktemp
 moby
@@ -31,6 +33,7 @@ golangci
 golines
 gopath
 goreleaser
+gosec
 govulncheck
 ldflags
 maratori
@@ -80,6 +83,7 @@ prereq
 prng
 recompiles
 s2c2f
+stdlib
 stretchr
 subtest
 testifylint

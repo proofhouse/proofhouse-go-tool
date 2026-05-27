@@ -1,7 +1,17 @@
 agentic
 [Aa]llowlist
 [Cc]i
+[Cc]ommitlint
+errOut
+msg
+msgFile
 [Pp]roofhouse
+regexes
+src
+staticcheck
+stdin
+stdlib
+substrings
 [Bb]uildx
 [Bb]uildmeta
 [Bb]uildType
