@@ -306,6 +306,41 @@ mutate *args:
 mutate-all:
     go tool gremlins unleash --timeout-coefficient {{ gremlins_timeout_coefficient }} .
 
+# Fuzz time budget per target. The nightly fuzz workflow under
+# `.github/workflows/` overrides this to several minutes per target
+# so corpus growth happens off the critical path. The local default
+# keeps a full inner-loop sweep over today's target set under a
+# minute so a contributor can run the recipe before pushing.
+fuzz_time := env("FUZZ_TIME", "30s")
+
+# Run native Go fuzz targets under [path] (default the entire
+# module). `go test -fuzz` takes one target regular expression per
+# invocation, so this recipe lists every Fuzz* function under each
+# package below [path] and runs them one at a time for the
+# {{ fuzz_time }} budget. Seed-corpus failures fail the recipe and
+# new crashers land under each package's `testdata/fuzz/`. A
+# nightly workflow under `.github/workflows/` invokes this same
+# recipe with a longer FUZZ_TIME, mirroring the gremlins /
+# mutate-all shape where one recipe powers both the inner loop and
+# the scheduled sweep.
+[script]
+fuzz path="./...":
+    set -euo pipefail
+    found=0
+    for pkg in $(go list {{ path }}); do
+        targets=$(go test -list '^Fuzz' "$pkg" 2>/dev/null | grep -E '^Fuzz' || true)
+        [[ -z "$targets" ]] && continue
+        while IFS= read -r target; do
+            echo "==> $pkg $target"
+            go test -run='^$' -fuzz="^${target}$" -fuzztime={{ fuzz_time }} "$pkg"
+            found=$((found+1))
+        done <<< "$targets"
+    done
+    if (( found == 0 )); then
+        echo "no fuzz targets discovered under {{ path }}" >&2
+        exit 1
+    fi
+
 # Run tests with coverage, print the per-function breakdown, and
 # enforce the project thresholds documented in `.testcoverage.yml`.
 # This is the inner-loop coverage gate. Pair with `just mutate
@@ -415,6 +450,33 @@ vendor-check:
         echo "vendor drift detected — run 'just vendor' and commit" >&2
         exit 1
     fi
+
+# --- Aggregators ---
+
+# Composed quality gates so a contributor hits one recipe instead
+# of chaining the underlying single-purpose recipes from memory.
+# Each aggregator names its dependencies and adds no extra logic,
+# so any failure points at the actual gate that fired rather than
+# at the wrapper.
+
+# Fast quality bar for save-time and routine pre-push runs. tidy
+# normalizes go.mod / go.sum first so the rest of the gate sees the
+# canonical dependency set; vendor-check at the end catches any
+# drift the rest of the gate introduced.
+check: tidy verify lint test vuln vendor-check
+
+# Comprehensive quality bar for release-prep sweeps. Layers the
+# race detector, the inner-loop fuzz sweep (30 seconds per target
+# by default; override via FUZZ_TIME), and the full-history
+# gitleaks scan on top of `check`. Slower than `check` by minutes
+# rather than seconds, so kept off the inner-loop path.
+check-all: check test-race fuzz gitleaks
+
+# Security-only sub-aggregator. Pairs govulncheck with the depscan,
+# malscan, and gitleaks scanners so a future `security.yml`
+# workflow under `.github/workflows/` invokes one recipe rather
+# than enumerate the scanner set in YAML.
+security: vuln depscan malscan gitleaks
 
 # --- Utilities ---
 
