@@ -120,6 +120,11 @@ clean:
 format-go *args:
     {{ golangci_lint }} fmt {{ args }}
 
+# Format Markdown files (whitespace, list markers, code fence styles).
+# Rewrites in place. Pair with `fix-markdown` for semantic lint fixes.
+format-markdown *args:
+    rumdl fmt {{ if args == "" { "." } else { args } }}
+
 # --- Fix ---
 
 # Fix Go linting issues. `go fix` (Go 1.26+) runs the modernizer analyzers;
@@ -132,12 +137,18 @@ fix-go *args:
     {{ golangci_lint }} fmt {{ args }}
     {{ golangci_lint }} run --fix --modules-download-mode=vendor {{ args }}
 
+# Apply rumdl's auto-fixable rules to Markdown files. Complement to
+# `format-markdown` (which only rewrites whitespace and ordering, not
+# semantic lints).
+fix-markdown *args:
+    rumdl check --fix {{ if args == "" { "." } else { args } }}
+
 # --- Lint ---
 
 # Run every linter that operates on the source tree. Aggregator.
 # Config, spelling, and workflow linters land on their own dedicated
 # targets and join this recipe as they arrive.
-lint: lint-go lint-go-modernize lint-go-deadcode lint-go-arch lint-prose lint-spelling
+lint: lint-go lint-go-modernize lint-go-deadcode lint-go-arch lint-prose lint-spelling lint-markdown
 
 # Run Go linters (golangci-lint via the pinned Docker image, vendor-mode).
 # --modules-download-mode=vendor matches `just build`, so the linter sees
@@ -202,6 +213,12 @@ lint-prose *args:
 # vendor/ tree via the ignorePaths block in .cspell.jsonc.
 lint-spelling *args:
     cspell --config .cspell.jsonc --no-summary --no-progress --no-must-find-files {{ if args == "" { "." } else { args } }}
+
+# Lint Markdown files against the project's .rumdl.toml ruleset.
+# rumdl handles structural lints (heading style, list marker style,
+# code fence style); vale handles prose.
+lint-markdown *args:
+    rumdl check {{ if args == "" { "." } else { args } }}
 
 # --- Test ---
 
