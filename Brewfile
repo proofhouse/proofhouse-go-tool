@@ -1,0 +1,7 @@
+brew "biome"
+brew "cspell"
+brew "go"
+brew "just"
+brew "rumdl"
+brew "vale"
+brew "yamllint"

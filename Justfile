@@ -92,6 +92,24 @@ export PATH := `go env GOPATH` + "/bin:" + env("PATH")
 # Default recipe
 default: lint-go test
 
+# --- Setup ---
+
+# Set up development environment. New contributors run this once after
+# cloning. Idempotent: re-running upgrades dependencies and refreshes
+# Vale's synced style packages.
+setup:
+    just install-brew
+    just install-tools
+
+# Install Homebrew dependencies from Brewfile.
+install-brew:
+    brew bundle check || brew bundle install
+
+# Refresh non-brew tooling. Today that means Vale's synced style
+# packages; grows as new sync-style tools land.
+install-tools:
+    vale sync
+
 # --- Build ---
 
 # CGO_ENABLED=0 removes the host C toolchain as a build input. -buildvcs=false
