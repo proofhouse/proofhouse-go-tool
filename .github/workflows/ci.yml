@@ -27,10 +27,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-env:
-  # renovate: datasource=github-releases depName=casey/just
-  JUST_VERSION: 1.51.0
-
 jobs:
   lint-go:
     name: lint-go
@@ -52,22 +48,8 @@ jobs:
           go-version-file: go.mod
           check-latest: false
 
-      - name: Install just
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          asset="just-${JUST_VERSION}-x86_64-unknown-linux-musl.tar.gz"
-          tmp=$(mktemp -d)
-          cd "$tmp"
-          gh release download "${JUST_VERSION}" \
-            --repo casey/just \
-            --pattern "${asset}" \
-            --pattern SHA256SUMS
-          sha256sum --ignore-missing --check SHA256SUMS
-          tar -xzf "${asset}"
-          install -m 0755 just /usr/local/bin/just
-          just --version
+      - name: Set up just
+        uses: ./.github/actions/setup-just
 
       - name: Run Go-flavored lints
         run: just lint-go-all
@@ -92,22 +74,8 @@ jobs:
           go-version-file: go.mod
           check-latest: false
 
-      - name: Install just
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          asset="just-${JUST_VERSION}-x86_64-unknown-linux-musl.tar.gz"
-          tmp=$(mktemp -d)
-          cd "$tmp"
-          gh release download "${JUST_VERSION}" \
-            --repo casey/just \
-            --pattern "${asset}" \
-            --pattern SHA256SUMS
-          sha256sum --ignore-missing --check SHA256SUMS
-          tar -xzf "${asset}"
-          install -m 0755 just /usr/local/bin/just
-          just --version
+      - name: Set up just
+        uses: ./.github/actions/setup-just
 
       - name: Run tests
         run: just test
@@ -132,22 +100,8 @@ jobs:
           go-version-file: go.mod
           check-latest: false
 
-      - name: Install just
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          asset="just-${JUST_VERSION}-x86_64-unknown-linux-musl.tar.gz"
-          tmp=$(mktemp -d)
-          cd "$tmp"
-          gh release download "${JUST_VERSION}" \
-            --repo casey/just \
-            --pattern "${asset}" \
-            --pattern SHA256SUMS
-          sha256sum --ignore-missing --check SHA256SUMS
-          tar -xzf "${asset}"
-          install -m 0755 just /usr/local/bin/just
-          just --version
+      - name: Set up just
+        uses: ./.github/actions/setup-just
 
       - name: Run tests with race detector
         run: just test-race
@@ -172,22 +126,8 @@ jobs:
           go-version-file: go.mod
           check-latest: false
 
-      - name: Install just
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          asset="just-${JUST_VERSION}-x86_64-unknown-linux-musl.tar.gz"
-          tmp=$(mktemp -d)
-          cd "$tmp"
-          gh release download "${JUST_VERSION}" \
-            --repo casey/just \
-            --pattern "${asset}" \
-            --pattern SHA256SUMS
-          sha256sum --ignore-missing --check SHA256SUMS
-          tar -xzf "${asset}"
-          install -m 0755 just /usr/local/bin/just
-          just --version
+      - name: Set up just
+        uses: ./.github/actions/setup-just
 
       - name: Run govulncheck
         run: just vuln
@@ -212,22 +152,8 @@ jobs:
           go-version-file: go.mod
           check-latest: false
 
-      - name: Install just
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          asset="just-${JUST_VERSION}-x86_64-unknown-linux-musl.tar.gz"
-          tmp=$(mktemp -d)
-          cd "$tmp"
-          gh release download "${JUST_VERSION}" \
-            --repo casey/just \
-            --pattern "${asset}" \
-            --pattern SHA256SUMS
-          sha256sum --ignore-missing --check SHA256SUMS
-          tar -xzf "${asset}"
-          install -m 0755 just /usr/local/bin/just
-          just --version
+      - name: Set up just
+        uses: ./.github/actions/setup-just
 
       - name: Check vendor drift
         run: just vendor-check
