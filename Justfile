@@ -7,6 +7,47 @@ module := "github.com/proofhouse/proofhouse-go"
 bin_name := "proofhouse-go"
 bin_dir := "bin"
 
+# golangci-lint version pin. golangci-lint is distributed as pre-built
+# binaries with linter versions baked in, so we pin a Docker image by
+# digest rather than `go install` it. Renovate's customManager
+# (.github/renovate.json5, landing in a later commit) tracks the
+# version + digest pair below via the comment marker.
+#
+# renovate: datasource=docker depName=golangci/golangci-lint
+golangci_lint_version := "v2.12.2"
+golangci_lint_image := "docker.io/golangci/golangci-lint:v2.12.2@sha256:5cceeef04e53efe1470638d4b4b4f5ceefd574955ab3941b2d9a68a8c9ad5240"
+
+# Locate a Docker-compatible container runtime. Probe PATH first, then
+# well-known install locations so the recipe still works inside agentic
+# harnesses or sandboxes that strip /usr/local/bin from PATH. Override by
+# setting CONTAINER_RUNTIME in the environment.
+container_runtime := env("CONTAINER_RUNTIME", `bash -c '
+    docker_path=$(command -v docker 2>/dev/null || true)
+    podman_path=$(command -v podman 2>/dev/null || true)
+    for p in "$docker_path" \
+             /usr/local/bin/docker \
+             /opt/homebrew/bin/docker \
+             /Applications/Docker.app/Contents/Resources/bin/docker \
+             "$HOME/.orbstack/bin/docker" \
+             "$HOME/.rd/bin/docker" \
+             "$podman_path" \
+             /opt/podman/bin/podman; do
+        if [ -n "$p" ] && [ -x "$p" ]; then echo "$p"; exit 0; fi
+    done
+    echo docker
+'`)
+
+# Container invocation prefix for golangci-lint. Mounts the working dir at
+# /data and the host Go module cache so first-run resolution stays cheap.
+# Shell substitutions evaluate at recipe-run time, not Justfile-parse time.
+#
+# DOCKER_CONFIG points at a fresh empty directory so docker skips the
+# osxkeychain credential helper (public Docker Hub pulls don't need it,
+# and sandboxed environments can't always reach the helper binary).
+# PATH gets the runtime's directory prepended for cases where docker
+# itself isn't on the calling shell's PATH.
+golangci_lint := 'DOCKER_CONFIG="$(mktemp -d)" PATH="$(dirname ' + container_runtime + '):$PATH" ' + container_runtime + ' run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e GOLANGCI_LINT_CACHE=/tmp/golangci-lint-cache -v "$(go env GOMODCACHE):/go/pkg/mod" -v "$(pwd):/data" -w /data ' + golangci_lint_image + ' golangci-lint'
+
 # Build metadata. `date` is the *commit author date* (UTC, ISO-8601),
 # not build invocation time, so two builds of the same commit produce
 # identical binaries. `source_date_epoch` exports the same instant as
@@ -35,7 +76,7 @@ ldflags := "-s -w -buildid=" + " -X " + module + "/internal/buildmeta.Version=" 
 export PATH := `go env GOPATH` + "/bin:" + env("PATH")
 
 # Default recipe
-default: build
+default: lint-go test
 
 # --- Build ---
 
@@ -58,6 +99,30 @@ run *args:
 # Clean build artifacts
 clean:
     rm -rf {{ bin_dir }} dist coverage.out coverage.html coverage.txt
+
+# --- Format ---
+
+# Format Go code (uses golangci-lint formatters via the pinned Docker image)
+format-go *args:
+    {{ golangci_lint }} fmt {{ args }}
+
+# --- Fix ---
+
+# Fix Go linting issues. Runs `golangci-lint fmt` to apply formatter
+# rewrites, then `golangci-lint run --fix` to apply any auto-fixable
+# linter findings. Both invocations go through the pinned image.
+fix-go *args:
+    {{ golangci_lint }} fmt {{ args }}
+    {{ golangci_lint }} run --fix --modules-download-mode=vendor {{ args }}
+
+# --- Lint ---
+
+# Run Go linters (golangci-lint via the pinned Docker image, vendor-mode).
+# --modules-download-mode=vendor matches `just build`, so the linter sees
+# exactly the dependency set the compiler does and never falls back to
+# the module proxy.
+lint-go *args:
+    {{ golangci_lint }} run --modules-download-mode=vendor {{ args }}
 
 # --- Test ---
 
