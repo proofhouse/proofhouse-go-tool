@@ -155,3 +155,9 @@ versionsClient
 [Dd]eadcode
 [Rr]eachability
 customManager
+[Gg]it
+sed
+EOF
+GNU
+coreutils
+stripspace
