@@ -48,6 +48,20 @@ container_runtime := env("CONTAINER_RUNTIME", `bash -c '
 # itself isn't on the calling shell's PATH.
 golangci_lint := 'DOCKER_CONFIG="$(mktemp -d)" PATH="$(dirname ' + container_runtime + '):$PATH" ' + container_runtime + ' run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e GOLANGCI_LINT_CACHE=/tmp/golangci-lint-cache -v "$(go env GOMODCACHE):/go/pkg/mod" -v "$(pwd):/data" -w /data ' + golangci_lint_image + ' golangci-lint'
 
+# go-arch-lint version pin. Same Docker-pin pattern as golangci-lint:
+# the upstream image bundles the linter at a known version, and Renovate
+# tracks the version + digest pair via the customManager in renovate.json5.
+# Image is amd64-only; arm64 dev hosts run it via emulation.
+#
+# renovate: datasource=docker depName=fe3dback/go-arch-lint
+go_arch_lint_version := "release-v1.15.0"
+go_arch_lint_image := "docker.io/fe3dback/go-arch-lint:release-v1.15.0@sha256:5af4ee8cb2ea9b251b44a24e0df5f99bd4dd1005a2c4eb0fa0bc3e7d3fab9a9a"
+
+# go-arch-lint invocation. Mounts project read-only since the linter only
+# reads source. Does not set --user: the upstream image is built for root,
+# and a read-only mount means root inside can't write to the host anyway.
+go_arch_lint := 'DOCKER_CONFIG="$(mktemp -d)" PATH="$(dirname ' + container_runtime + '):$PATH" ' + container_runtime + ' run --rm -v "$(pwd):/app:ro" ' + go_arch_lint_image
+
 # Build metadata. `date` is the *commit author date* (UTC, ISO-8601),
 # not build invocation time, so two builds of the same commit produce
 # identical binaries. `source_date_epoch` exports the same instant as
@@ -162,6 +176,13 @@ lint-go-deadcode-tests:
         echo "$output" >&2
         exit 1
     fi
+
+# Enforce intra-project layering rules from .go-arch-lint.yml. The
+# compiler covers cycles and outside-org visibility; this catches the
+# layer rules it can't (e.g., "cmd may depend on internal but not the
+# reverse"). Pinned Docker image, same pattern as golangci-lint.
+lint-go-arch:
+    {{ go_arch_lint }} check --project-path /app
 
 # --- Test ---
 
