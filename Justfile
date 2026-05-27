@@ -138,6 +138,31 @@ lint-go-modernize:
         exit 1
     fi
 
+# Fail if `deadcode` finds unreachable functions starting from the binary
+# entry points. Whole-program reachability complements the package-scoped
+# `unused` linter in golangci-lint. The tool prints findings but exits 0,
+# so any output is treated as failure.
+[script]
+lint-go-deadcode:
+    output=$(go tool deadcode ./cmd/... 2>&1)
+    if [[ -n "$output" ]]; then
+        echo "deadcode found unreachable code — remove or justify:" >&2
+        echo "$output" >&2
+        exit 1
+    fi
+
+# Same as lint-go-deadcode but roots reachability at every test binary too.
+# Noisier; intentionally not part of the default `lint` gate. Run before
+# wholesale refactors to surface code only kept alive by tests.
+[script]
+lint-go-deadcode-tests:
+    output=$(go tool deadcode -test ./... 2>&1)
+    if [[ -n "$output" ]]; then
+        echo "deadcode (with -test) found unreachable code:" >&2
+        echo "$output" >&2
+        exit 1
+    fi
+
 # --- Test ---
 
 # Run tests
