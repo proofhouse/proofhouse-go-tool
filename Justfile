@@ -175,10 +175,19 @@ fix-markdown *args:
 
 # --- Lint ---
 
-# Run every linter that operates on the source tree. Aggregator.
-# Config, spelling, and workflow linters land on their own dedicated
-# targets and join this recipe as they arrive.
-lint: lint-go lint-go-modernize lint-go-deadcode lint-go-arch lint-prose lint-spelling lint-markdown lint-config lint-yaml lint-workflows
+# Aggregator over the Go-flavored lint sub-recipes: golangci-lint,
+# the modernizer gate, the deadcode reachability scan, go-arch-lint
+# layering, and actionlint. Carved out so the `lint-go` job in
+# `.github/workflows/ci.yml` invokes a single recipe rather than
+# enumerate the Go gates in YAML. `just lint` below composes from
+# this plus the prose, spelling, Markdown, config, and YAML gates
+# whose CI install paths land in follow-up workflows.
+lint-go-all: lint-go lint-go-modernize lint-go-deadcode lint-go-arch lint-workflows
+
+# Run every linter that operates on the source tree. Aggregator over
+# the Go gates (via `lint-go-all`), prose (vale), spelling (cspell),
+# Markdown (rumdl), config / JS / TS (biome), and YAML (yamllint).
+lint: lint-go-all lint-prose lint-spelling lint-markdown lint-config lint-yaml
 
 # Run Go linters (golangci-lint via the pinned Docker image, vendor-mode).
 # --modules-download-mode=vendor matches `just build`, so the linter sees

@@ -41,7 +41,7 @@ niquests
 [Pp]rek
 [Pp]rereq
 [Qq]ueryable
-Renovate
+[Rr]enovate
 reviewdog
 repo
 [Rr]uleset
@@ -152,3 +152,6 @@ versionsCase
 versionsClient
 [Aa]ctionlint
 [Ss]umdb
+[Dd]eadcode
+[Rr]eachability
+customManager
