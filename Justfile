@@ -290,6 +290,16 @@ vuln:
 gitleaks:
     gitleaks git --verbose .
 
+# Scan each vendored module for retracted versions and deprecated
+# modules via the pkg.go.dev /v1beta API (S2C2F SCA-3). depscan parses
+# vendor/modules.txt for the enumerated module set, queries
+# /v1beta/versions/{module} per entry, and reports any module whose
+# pinned version is marked retracted or whose latest version is
+# marked deprecated. Exits 1 on findings, 2 on tool failure. Run
+# `just vendor` first when vendor/modules.txt is stale.
+depscan:
+    go run ./tools/depscan
+
 # --- Dependencies ---
 
 # Tidy go.mod

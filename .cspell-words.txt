@@ -97,7 +97,12 @@ osv
 gomod
 runuser
 renovatebot
+CLI
+cli
 fe3dback
+modroot
+vexgen
+vulns
 asasalint
 asciicheck
 bidi
