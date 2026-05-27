@@ -30,14 +30,18 @@ repos:
   - repo: https://github.com/errata-ai/vale
     rev: f544f4923eb1c7d322c18e35f96333ef8ac29efa  # v3.13.1
     hooks:
-      # Scope the pre-commit-stage hook to Markdown files. Without
-      # this restriction, prek passes .git/COMMIT_EDITMSG (which has
-      # no extension) and vale parses it as plain text — code spans
-      # (`...`) stop suppressing rules like Google.Spacing, so dotted
-      # identifiers in backticks still get flagged. The commit-msg
-      # stage hook below handles the commit message with --ext=.md.
+      # Scope the pre-commit-stage hook to the file types .vale.ini
+      # actually configures rules for (Markdown + Go source). The
+      # upstream hook defaults to types: [text], which passes every
+      # text file plus .git/COMMIT_EDITMSG; vale then parses the
+      # commit-message buffer as plain text (no extension), backticks
+      # lose their code-span meaning, and rules like Google.Spacing
+      # flag dotted identifiers even inside backticks. The
+      # commit-msg-stage hook below handles the commit message itself
+      # with --ext=.md, where backticks work as expected. Extend
+      # types_or when .vale.ini grows a new section.
       - id: vale
-        types: [markdown]
+        types_or: [markdown, go]
       - id: vale
         name: vale (commit message)
         stages: [commit-msg]
