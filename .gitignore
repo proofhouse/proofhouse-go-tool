@@ -5,6 +5,11 @@ tmp/
 !.env.example
 mise.local.toml
 
+# Agent commit-message draft. Authored at the repo root so vale's
+# [formats] mapping resolves it, linted via `just lint-commit-msg`,
+# then consumed with `git commit -F COMMIT_AGENTMSG`. Never committed.
+COMMIT_AGENTMSG
+
 # Go build output
 bin/
 /proofhouse-go

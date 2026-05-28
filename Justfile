@@ -242,17 +242,22 @@ lint-go-arch:
 # Lint prose in Markdown files and source comments via vale. Glob
 # excludes the LICENSE (canonical Apache 2.0 text), the auto-generated
 # changelog, vale's own style packages, scratch dirs, vendored code,
-# and the gitignored agent worktrees under .claude/worktrees/ (whose
-# nested vendor trees otherwise crash vale); the per-file-type rules in
-# .vale.ini decide what else gets inspected.
+# the gitignored agent worktrees under .claude/worktrees/ (whose nested
+# vendor trees otherwise crash vale), and the COMMIT_AGENTMSG draft (the
+# `lint-commit-msg` recipe owns that one under the stricter commit
+# scope); the per-file-type rules in .vale.ini decide what else gets
+# inspected.
 lint-prose *args:
-    vale --glob='!{LICENSE,CHANGELOG.md,.vale/*,tmp/*,vendor/*,.claude/worktrees/*}' {{ if args == "" { "." } else { args } }}
+    vale --glob='!{LICENSE,CHANGELOG.md,.vale/*,tmp/*,vendor/*,.claude/worktrees/*,COMMIT_AGENTMSG}' {{ if args == "" { "." } else { args } }}
 
 # Check spelling across the tree against the project dictionary at
 # .cspell-words.txt. cspell ignores binaries, generated files, and the
-# vendor/ tree via the ignorePaths block in .cspell.jsonc.
+# vendor/ tree via the ignorePaths block in .cspell.jsonc. The
+# COMMIT_AGENTMSG draft gets excluded here and checked by
+# `lint-commit-msg` instead, so a work-in-progress message never trips
+# the tree-wide spell check.
 lint-spelling *args:
-    cspell --config .cspell.jsonc --no-summary --no-progress --no-must-find-files {{ if args == "" { "." } else { args } }}
+    cspell --config .cspell.jsonc --no-summary --no-progress --no-must-find-files --exclude COMMIT_AGENTMSG {{ if args == "" { "." } else { args } }}
 
 # Lint Markdown files against the project's .rumdl.toml ruleset.
 # rumdl handles structural lints (heading style, list marker style,
@@ -284,6 +289,23 @@ lint-yaml *args:
 # on every PR that touches the workflow directory.
 lint-workflows:
     go tool actionlint
+
+# Pre-validate a drafted commit message against the same gates the
+# commit-msg hook runs, so message problems surface while iterating
+# rather than at commit time. Reads the draft from the repo-root
+# COMMIT_AGENTMSG file (gitignored; see AGENTS.md for the workflow).
+# Runs the four commit-msg-stage checks in order: vale under the commit
+# scope (via the shared wrapper, which now applies ai-tells-commits),
+# cspell with the commit-msg dictionary, commitlint for the Conventional
+# Commits shape, and commit-trailers for trailer rules. The real gate
+# stays the prek commit-msg hook on .git/COMMIT_EDITMSG; this recipe
+# only mirrors it. Commit the validated draft with `git commit -F
+# COMMIT_AGENTMSG`.
+lint-commit-msg:
+    tools/vale-commit-msg.sh COMMIT_AGENTMSG
+    cspell --config .cspell.jsonc --no-summary --no-progress --language-id commit-msg COMMIT_AGENTMSG
+    go tool commitlint lint --message COMMIT_AGENTMSG
+    go run ./tools/commit-trailers --message COMMIT_AGENTMSG
 
 # --- Test ---
 
