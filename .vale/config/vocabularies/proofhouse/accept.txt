@@ -197,3 +197,8 @@ SDKs?
 XDG
 JSON1
 [Tt]oolchains?
+shellQuote
+printf
+argv
+agent_id
+agent_type

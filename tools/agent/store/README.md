@@ -491,7 +491,7 @@ tools/agent/store/
   errors.go                # ErrVersionConflict, ErrScopeUnresolved, ...
   store_test.go            # Go unit tests
   hooks/
-    inject-agent-id.go     # reference PreToolUse hook
+    inject-agent-id/       # reference PreToolUse hook (main.go + main_test.go)
 ```
 
 ## Open questions

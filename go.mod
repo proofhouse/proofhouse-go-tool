@@ -8,6 +8,7 @@ require (
 	github.com/owenrumney/go-sarif/v3 v3.3.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
+	pgregory.net/rapid v1.3.0
 )
 
 require (
