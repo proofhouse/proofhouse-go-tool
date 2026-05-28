@@ -134,3 +134,15 @@ exceptions:
   - Twilio
   - Okta
   - Auth0
+  - Claude
+  - Code
+  - SQLite
+  - WAL
+  - TTL
+  - CAS
+  - PreToolUse
+  - SubagentStart
+  - SubagentStop
+  - SessionStart
+  - SessionStop
+  - TeammateIdle
