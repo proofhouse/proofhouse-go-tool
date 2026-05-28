@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os/exec"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -22,14 +23,22 @@ import (
 //
 // The test filters out strings containing the zero byte: bash through
 // its command-line interface can't carry such bytes across the argv
-// boundary, so they fall outside the contract.
+// boundary, so they fall outside the contract. On Windows the same
+// holds for the carriage return, which the Windows bash runtime
+// strips from the command line before the shell ever parses it.
 func TestProperty_ShellQuoteRoundTripsThroughBash(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
 	rapid.Check(t, func(t *rapid.T) {
 		s := rapid.String().Filter(func(s string) bool {
-			return !strings.ContainsRune(s, 0)
+			if strings.ContainsRune(s, 0) {
+				return false
+			}
+			if runtime.GOOS == "windows" && strings.ContainsRune(s, '\r') {
+				return false
+			}
+			return true
 		}).Draw(t, "s")
 
 		//nolint:gosec // G204 false positive: feeding bash a constructed shell string forms the test's premise.
