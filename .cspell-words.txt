@@ -224,3 +224,5 @@ matrixed
 shfmt
 ENV
 CWD
+agentstore
+contexttemplate
