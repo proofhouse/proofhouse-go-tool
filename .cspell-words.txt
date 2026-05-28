@@ -266,3 +266,4 @@ smembers
 getset
 AGENTMSG
 extensionless
+autostash

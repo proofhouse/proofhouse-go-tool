@@ -166,6 +166,7 @@ coreutils
 stripspace
 worktreeinclude
 [Ww]orktrees?
+[Rr]ebase
 agentstore
 bbolt
 cgo
