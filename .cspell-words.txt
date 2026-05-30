@@ -267,3 +267,16 @@ getset
 AGENTMSG
 extensionless
 autostash
+searchpath
+repofile
+funcmap
+httpcache
+ghlabels
+ghassignees
+ghmilestones
+ghprojects
+typesscopes
+synctest
+pipeable
+nindent
+inlines
