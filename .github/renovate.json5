@@ -14,6 +14,10 @@
     // Default GitHub Actions to pin-by-digest with a human-readable tag
     // comment — same discipline AGENTS.md mandates for every `uses:`.
     "helpers:pinGitHubActionDigests",
+    // Enable Renovate's built-in pre-commit manager (off by default) so it
+    // tracks the hook `rev:` pins in `.pre-commit-config.yaml`, the same way
+    // the built-in managers track `go.mod` and the GitHub Actions pins.
+    ":enablePreCommit",
   ],
 
   // Authenticated identity. `username` is what GitHub recognizes as the
@@ -79,6 +83,12 @@
     {
       groupName: "github-actions",
       matchManagers: ["github-actions"],
+    },
+
+    // One review surface for every pre-commit hook `rev:` bump.
+    {
+      groupName: "pre-commit-hooks",
+      matchManagers: ["pre-commit"],
     },
   ],
 
