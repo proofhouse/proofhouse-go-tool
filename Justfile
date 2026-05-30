@@ -453,26 +453,18 @@ vuln:
 gitleaks:
     gitleaks git --verbose .
 
-# Scan each vendored module for retracted versions and deprecated
-# modules via the pkg.go.dev /v1beta API (S2C2F SCA-3). depscan parses
-# vendor/modules.txt for the enumerated module set, queries
-# /v1beta/versions/{module} per entry, and reports any module whose
-# pinned version is marked retracted or whose latest version is
-# marked deprecated. Exits 1 on findings, 2 on tool failure. Run
-# `just vendor` first when vendor/modules.txt is stale.
-depscan:
-    go run ./tools/depscan
-
-# Scan each vendored module against the OSV malicious-package
-# registry (S2C2F ING-3). malscan parses vendor/modules.txt for the
-# enumerated module set, queries the OSV /v1/query endpoint per
-# entry, and reports any advisory whose ID starts with MAL- — the
-# prefix the OSSF malicious-packages dataset uses for malware
-# reports. Findings list the module, pinned version, advisory ID,
-# and summary text. Exits 1 on findings, 2 on tool failure. Run
-# `just vendor` first when vendor/modules.txt is stale.
-malscan:
-    go run ./tools/malscan
+# Scan each vendored module for two supply-chain concerns in one pass
+# via the external gomodscan tool (extracted from this repo's former
+# tools/depscan and tools/malscan): dependencies that pkg.go.dev marks
+# as retracted at the pinned version or deprecated at the latest version
+# (S2C2F SCA-3), and dependencies the OSV malicious-package registry
+# flags as malware under the MAL- ID prefix (S2C2F ING-3). gomodscan
+# reads vendor/modules.txt for the module set, so run `just vendor`
+# first when it is stale. Exits 1 on findings, 2 on tool failure.
+# Pinned to @latest until release management lands in this repo and the
+# version can be pinned like the other `go tool` dependencies.
+gomodscan:
+    go run github.com/proofhouse/gomodscan/cmd/gomodscan@latest
 
 # --- Dependencies ---
 
@@ -525,11 +517,11 @@ check: tidy verify lint test vuln vendor-check
 # rather than seconds, so kept off the inner-loop path.
 check-all: check test-race fuzz gitleaks
 
-# Security-only sub-aggregator. Pairs govulncheck with the depscan,
-# malscan, and gitleaks scanners so a future `security.yml`
-# workflow under `.github/workflows/` invokes one recipe rather
-# than enumerate the scanner set in YAML.
-security: vuln depscan malscan gitleaks
+# Security-only sub-aggregator. Pairs govulncheck with the gomodscan
+# and gitleaks scanners so a future `security.yml` workflow under
+# `.github/workflows/` invokes one recipe rather than enumerate the
+# scanner set in YAML.
+security: vuln gomodscan gitleaks
 
 # --- Utilities ---
 
