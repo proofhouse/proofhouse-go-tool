@@ -97,6 +97,7 @@ ghsa
 malscan
 osv
 gomod
+gomodscan
 runuser
 renovatebot
 CLI

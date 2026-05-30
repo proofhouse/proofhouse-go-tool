@@ -114,6 +114,7 @@ ROI
 depscan
 [Dd]edupe
 exitcode
+gomodscan
 malscan
 modroot
 parseLine
