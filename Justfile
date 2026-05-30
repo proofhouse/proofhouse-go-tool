@@ -1,6 +1,15 @@
 set unstable := true
 set positional-arguments := true
 
+# Run [script] recipes under bash rather than the default sh. On Linux
+# sh is dash, which lacks [[ ]], <<<, and set -o pipefail — constructs
+# every [script] recipe below relies on. Under dash those recipes
+# either hard-fail (fuzz, on set -o pipefail) or silently no-op (the
+# deadcode and modernize gates, whose [[ test errors inside an if so
+# set -e never trips and the failure branch is skipped). macOS sh is
+# bash, which is why the breakage stayed hidden until CI ran on Linux.
+set script-interpreter := ['bash', '-eu']
+
 # Go project metadata
 
 module := "github.com/proofhouse/proofhouse-go"
