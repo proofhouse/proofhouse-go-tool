@@ -224,3 +224,5 @@ variadic
 uniqueid
 CLIs
 devs
+CodeQL
+autobuild
