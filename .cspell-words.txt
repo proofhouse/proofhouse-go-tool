@@ -14,6 +14,7 @@ buildkit
 buildmeta
 buildvcs
 buildx
+codeowners
 codespell
 cocogitto
 cooldown
