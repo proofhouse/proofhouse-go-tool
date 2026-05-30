@@ -281,3 +281,5 @@ synctest
 pipeable
 nindent
 inlines
+codeql
+autobuild
