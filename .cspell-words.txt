@@ -283,3 +283,8 @@ nindent
 inlines
 codeql
 autobuild
+covdata
+covdir
+gocoverdir
+textfmt
+slotsdir
