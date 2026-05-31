@@ -20,13 +20,9 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 jobs:
   actionlint:
     permissions:
       contents: read
     # yamllint disable-line rule:line-length
-    uses: proofhouse/github-actions/.github/workflows/lint-workflows.yml@8a68c5a598cc9470e7def59b6c427cd1e354fbb4 # v0.1.0
+    uses: proofhouse/github-actions/.github/workflows/lint-workflows.yml@c55eeb3115d95f6b8777538b4d6f49d48830e199 # v0.2.0
