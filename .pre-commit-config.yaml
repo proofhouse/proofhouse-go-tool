@@ -28,7 +28,7 @@ repos:
         types: [yaml]
 
   - repo: https://github.com/errata-ai/vale
-    rev: f544f4923eb1c7d322c18e35f96333ef8ac29efa  # frozen: v3.13.1
+    rev: 810868b21c6c88cf78dfb8960b1afc78d1b7f6a8  # frozen: v3.14.2
     hooks:
       # Scope the pre-commit-stage hook to the file types .vale.ini
       # actually configures rules for (Markdown + Go source). The
@@ -46,7 +46,7 @@ repos:
         types_or: [markdown, go]
 
   - repo: https://github.com/rvben/rumdl-pre-commit
-    rev: 9f07a8f89dc360f6db3cc0ad9c1953148e9f706f  # frozen: v0.1.44
+    rev: b5029873694676361c078c7f3fd1f1d6f2b840e8  # frozen: v0.2.0
     hooks:
       - id: rumdl-fmt
       - id: rumdl
