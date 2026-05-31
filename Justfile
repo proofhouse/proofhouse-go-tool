@@ -473,10 +473,10 @@ gitleaks:
 # flags as malware under the MAL- ID prefix (S2C2F ING-3). gomodscan
 # reads vendor/modules.txt for the module set, so run `just vendor`
 # first when it is stale. Exits 1 on findings, 2 on tool failure.
-# Pinned to @latest until release management lands in this repo and the
-# version can be pinned like the other `go tool` dependencies.
+# Pinned as a `go tool` dep in go.mod so the local and CI versions
+# match, the same as the other scanners in this section.
 gomodscan:
-    go run github.com/proofhouse/gomodscan/cmd/gomodscan@latest
+    go tool gomodscan
 
 # Emit the gomodscan findings as SARIF to <file> for the security.yml
 # Code Scanning upload. Unlike the gomodscan gate recipe, a findings
@@ -485,7 +485,7 @@ gomodscan:
 gomodscan-sarif file:
     #!/usr/bin/env bash
     set -uo pipefail
-    go run github.com/proofhouse/gomodscan/cmd/gomodscan@latest -format sarif > "{{ file }}"
+    go tool gomodscan -format sarif > "{{ file }}"
     rc=$?
     if [ "$rc" -gt 1 ]; then exit "$rc"; fi
 
