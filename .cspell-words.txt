@@ -289,3 +289,4 @@ covdir
 gocoverdir
 textfmt
 slotsdir
+rhysd
