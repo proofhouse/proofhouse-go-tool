@@ -290,3 +290,4 @@ gocoverdir
 textfmt
 slotsdir
 rhysd
+tmpl

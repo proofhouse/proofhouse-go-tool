@@ -270,9 +270,10 @@ lint-go-arch:
 # vendor trees otherwise crash vale), and the COMMIT_AGENTMSG draft (the
 # `lint-commit-msg` recipe owns that one under the stricter commit
 # scope); the per-file-type rules in .vale.ini decide what else gets
-# inspected.
+# inspected. Findings render through the proofhouse-agent template from
+# the proofhouse package: one machine-parseable line per finding.
 lint-prose *args:
-    vale --glob='!{LICENSE,CHANGELOG.md,.vale/*,tmp/*,vendor/*,.claude/worktrees/*,COMMIT_AGENTMSG}' {{ if args == "" { "." } else { args } }}
+    vale --output=proofhouse-agent.tmpl --glob='!{LICENSE,CHANGELOG.md,.vale/*,tmp/*,vendor/*,.claude/worktrees/*,COMMIT_AGENTMSG}' {{ if args == "" { "." } else { args } }}
 
 # Check spelling across the tree against the project dictionary at
 # .cspell-words.txt. cspell ignores binaries, generated files, and the
