@@ -42,12 +42,12 @@ gremlins-report.json
 # Each negation needs the parent un-ignored first — git can't re-include
 # a child whose ancestor directory stays excluded.
 .vale/*
-!.vale/proofhouse/
+!.vale/proofhouse-go-tool/
 !.vale/config/
 .vale/config/*
 !.vale/config/vocabularies/
 .vale/config/vocabularies/*
-!.vale/config/vocabularies/proofhouse/
+!.vale/config/vocabularies/proofhouse-go-tool/
 
 # macOS
 .DS_Store
