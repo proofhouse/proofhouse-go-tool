@@ -18,18 +18,18 @@ formatters:
       sections:
         - standard
         - default
-        - prefix(github.com/proofhouse/proofhouse-go)
+        - prefix(github.com/proofhouse/proofhouse-go-tool)
         - blank
         - dot
         - alias
         - localmodule
       custom-order: true
     gofumpt:
-      module-path: github.com/proofhouse/proofhouse-go
+      module-path: github.com/proofhouse/proofhouse-go-tool
       extra-rules: true
     goimports:
       local-prefixes:
-        - github.com/proofhouse/proofhouse-go
+        - github.com/proofhouse/proofhouse-go-tool
     golines:
       max-len: 120
 
@@ -142,7 +142,7 @@ linters:
               desc: "Use math/rand/v2 instead"
         "non-main files":
           files:
-            - "!**/cmd/proofhouse-go/main.go"
+            - "!**/cmd/proofhouse-go-tool/main.go"
           deny:
             - pkg: log$
               desc: "Use log/slog instead"

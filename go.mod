@@ -1,4 +1,4 @@
-module github.com/proofhouse/proofhouse-go
+module github.com/proofhouse/proofhouse-go-tool
 
 go 1.26
 

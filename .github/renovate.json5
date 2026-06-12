@@ -22,7 +22,7 @@
 
   // Single-repo scope. The one global-only option that can't move to the
   // shared preset — it differs per repo.
-  repositories: ["proofhouse/proofhouse-go"],
+  repositories: ["proofhouse/proofhouse-go-tool"],
 
   // `gomodTidy` runs `go mod tidy` after a Go-module update so go.sum and
   // the indirect graph stay coherent in the same PR. Self-hosting means the
