@@ -76,7 +76,7 @@ Construction-time options carry every knob the resolver exposes. The package doe
 
 - `tools/contexttemplate`'s loader uses `Name` to resolve partial references during the AST walk.
 - `tools/contexttemplate`'s `include` and `readFile` template funcs use `Name` and `Path` respectively.
-- `tools/contexttemplate`'s bundled partial set ships as a `Source` at the tail of the default search path, wrapping the package's `embed.FS` (via `fs.Sub` to strip the internal `partials/` prefix).
+- `tools/contexttemplate`'s bundled partial set sits as a `Source` at the tail of the default search path, wrapping the package's `embed.FS` (via `fs.Sub` to strip the internal `partials/` prefix).
 - `tools/validate-pr` (planned migration) can use `Path` for its relative-link checks, wrapping the repo root through `DiskSources`.
 
 ## Out of scope
