@@ -12,8 +12,8 @@ set script-interpreter := ['bash', '-eu']
 
 # Go project metadata
 
-module := "github.com/proofhouse/proofhouse-go"
-bin_name := "proofhouse-go"
+module := "github.com/proofhouse/proofhouse-go-tool"
+bin_name := "proofhouse-go-tool"
 bin_dir := "bin"
 
 # golangci-lint version pin. golangci-lint is distributed as pre-built
@@ -150,15 +150,15 @@ install-tools:
 
 # Build the binary
 build:
-    CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags "{{ ldflags }}" -o {{ bin_dir }}/{{ bin_name }} ./cmd/proofhouse-go
+    CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags "{{ ldflags }}" -o {{ bin_dir }}/{{ bin_name }} ./cmd/proofhouse-go-tool
 
 # Install the binary to GOPATH/bin
 install:
-    CGO_ENABLED=0 go install -trimpath -buildvcs=false -ldflags "{{ ldflags }}" ./cmd/proofhouse-go
+    CGO_ENABLED=0 go install -trimpath -buildvcs=false -ldflags "{{ ldflags }}" ./cmd/proofhouse-go-tool
 
 # Run the binary
 run *args:
-    go run -ldflags "{{ ldflags }}" ./cmd/proofhouse-go "$@"
+    go run -ldflags "{{ ldflags }}" ./cmd/proofhouse-go-tool "$@"
 
 # Clean build artifacts
 clean:

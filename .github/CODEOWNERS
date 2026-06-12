@@ -1,4 +1,4 @@
-# Review routing for proofhouse-go. GitHub applies the last matching
+# Review routing for proofhouse-go-tool. GitHub applies the last matching
 # rule, so the supply-chain rules below override the default for the
 # paths they name. Owners are org teams (sole member @tbhb for now)
 # created with push access, the minimum GitHub requires for a team to

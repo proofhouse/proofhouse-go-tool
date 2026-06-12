@@ -4,7 +4,7 @@ tag_prefix = "v"
 path = "CHANGELOG.md"
 template = "remote"
 remote = "github.com"
-repository = "proofhouse-go"
+repository = "proofhouse-go-tool"
 owner = "proofhouse"
 authors = [{ username = "tbhb", signature = "Tony Burns" }]
 

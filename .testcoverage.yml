@@ -7,7 +7,7 @@
 # here guards against new code shipping with no test reach at all.
 
 profile: coverage.out
-local-prefix: github.com/proofhouse/proofhouse-go
+local-prefix: github.com/proofhouse/proofhouse-go-tool
 
 threshold:
   file: 75
@@ -20,7 +20,7 @@ exclude:
     # can't run from a go test process. Both scanners under tools/
     # already split that glue into a testable realMain helper, and
     # this exclusion list documents the same boundary for the rest.
-    - ^cmd/proofhouse-go/main\.go$
+    - ^cmd/proofhouse-go-tool/main\.go$
     # exitcode declares three integer constants and nothing else.
     # No executable lines to cover.
     - ^tools/internal/exitcode/

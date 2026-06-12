@@ -12,7 +12,7 @@ COMMIT_AGENTMSG
 
 # Go build output
 bin/
-/proofhouse-go
+/proofhouse-go-tool
 coverage.out
 coverage.html
 coverage.txt
