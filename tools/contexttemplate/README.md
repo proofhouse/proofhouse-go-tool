@@ -1,6 +1,6 @@
 # Contexttemplate
 
-A small Go renderer that turns one or more template files into a Markdown chunk fit for inlining into agent skills, hook prompts, or any other place that wants pre-computed repository context. Templates live next to their callers (agent skill directories, hook directories, anywhere in the repo). The renderer ships a single loaded template (sprout helpers, project-local registries, project services) and a search path that resolves partial references the way Unix `$PATH` resolves binaries.
+A small Go renderer that turns one or more template files into a Markdown chunk fit for inlining into agent skills, hook prompts, or any other place that wants pre-computed repository context. Templates live next to their callers (agent skill directories, hook directories, anywhere in the repo). The renderer bundles a single loaded template (sprout helpers, project-local registries, project services) and a search path that resolves partial references the way Unix `$PATH` resolves binaries.
 
 ## Motivation
 
@@ -30,9 +30,9 @@ flowchart LR
   CLI --> GoAPI
 ```
 
-Every caller path lands in the same `Render` function.
+Every caller path reaches the same `Render` function.
 
-- **Agent skills** open with a block that runs the CLI and inlines its stdout into the skill prompt at load time. The rendered context lands in the prompt with no hand-maintained copy to drift.
+- **Agent skills** open with a block that runs the CLI and inlines its stdout into the skill prompt at load time. The rendered context goes into the prompt with no hand-maintained copy to drift.
 - **Agents in an interactive session** run the CLI directly when they need to preview what a template renders. The pattern fits ad-hoc reasoning steps where the agent wants a snapshot of repository state without going through a skill.
 - **Humans** run the CLI from a terminal to debug a template or inspect what a partial produces in isolation.
 - **Shell scripts** invoke the CLI directly or through a just recipe. The category covers Claude Code hooks under `.claude/hooks/`, one-off scripts, and CI steps that need a snapshot of repository context.
@@ -62,7 +62,7 @@ Lint-only flags:
 
 The bare form `contexttemplate <path>` shortcuts to `render <path>` so skill blocks and recipe wrappers stay terse.
 
-A render call may pass more than one path. Renders happen in input order and concatenate with a blank line between each output. The rendered Markdown writes to stdout. A non-zero exit code accompanies any hard error (file not found, parse failure, write failure). Runtime failures inside registries surface through sprout's safe-function wrapping and land in the per-render error sink rather than aborting the render.
+A render call may pass more than one path. Renders happen in input order and concatenate with a blank line between each output. The rendered Markdown writes to stdout. A non-zero exit code accompanies any hard error (file not found, parse failure, write failure). Runtime failures inside registries surface through sprout's safe-function wrapping and collect in the per-render error sink rather than aborting the render.
 
 The environment variable `CONTEXTTEMPLATE_SEARCH_PATH` layers between flag overrides and the built-in defaults so shells and hooks can set the path once for a session.
 
@@ -279,7 +279,7 @@ func (d *Deps) GitHub(ctx context.Context) (*github.Client, error)
 func New(deps *Deps) sprout.Registry
 ```
 
-Once registered, the function lands in the funcmap under a name like `worktree`. Sprout's safe-function wrapping auto-pairs it with `safeWorktree`, which catches errors and returns the nil pointer instead of aborting the render. Templates always call the safe variant.
+Once registered, the function appears in the funcmap under a name like `worktree`. Sprout's safe-function wrapping auto-pairs it with `safeWorktree`, which catches errors and returns the nil pointer instead of aborting the render. Templates always call the safe variant.
 
 A registry that calls the same `tools/internal/git` method from more than one partial in a single render keeps a small private `sync.Once`-style cache to avoid re-shelling. Calls into `tools/internal/github` don't need this layer because httpcache already short-circuits repeat requests cheaply.
 
@@ -306,7 +306,7 @@ Registries imported on day one, with one or two representative function names ea
 
 Registries skipped until a real consumer asks:
 
-- **crypto**. Password generation, certificate manipulation, key formats. Heavyweight, no current need.
+- **crypto**. Password generation, certificate manipulation, key formats. Heavyweight, and nothing here needs it yet.
 - **network**. IP and CIDR parsing (no DNS lookups). No current call to render network config.
 - **random**. Non-deterministic random string, byte, and int generation. Breaks snapshot output outside a controlled context.
 - **uniqueid**. UUID v4 generation. Same determinism concern as random.
@@ -400,9 +400,9 @@ var sproutRegistries = []func() sprout.Registry{
 
 Template authoring needs a fast static check that catches mistakes before render time. The `lint` subcommand parses entry templates and any partials they reach via the search path, then walks the parsed set against a set of rules. No services run. The check returns issues with `file:line:col` context.
 
-Rules shipped on day one:
+Rules available on day one:
 
-- **syntax**. Delegates to `text/template.Parse`. Surfaces unclosed actions and mismatched `if`/`range`/`with`/`end`. Bad pipeline syntax and unrecognized actions land here too, with the native error locations from `text/template`'s parser.
+- **syntax**. Delegates to `text/template.Parse`. Surfaces unclosed actions and mismatched `if`/`range`/`with`/`end`. Bad pipeline syntax and unrecognized actions show up here too, with the native error locations from `text/template`'s parser.
 - **undefined-function**. Walks the AST for identifiers in pipeline-head positions and checks them against the configured funcmap (sprout registries, project registries, custom funcs). Flags anything that doesn't resolve.
 - **missing-partial**. Reuses the loader's partial resolution. A `{{ template "X" . }}` or `{{ include "X" . }}` reference that doesn't match an in-file `{{ define }}` or any file in the search path flags as a missing partial.
 - **cycle**. Static walk of the partial-reference graph from each entry. A back-edge flags as a cycle with the offending path listed.
@@ -436,7 +436,7 @@ Integration points:
 
 The engine has its own tests under `tools/contexttemplate/testdata/`. They cover parse handling, search-path resolution, AST walking, recursion guards, and error-sink behavior. Synthetic templates exercise specific code paths and live alongside the package's `*_test.go` files.
 
-Downstream tests (for the real templates that ship alongside callers) stay out of scope for v1. The likely v2 path adds a declarative test mode exposed through the CLI, something like `contexttemplate --test <path-to-spec>`, with a fixture format that describes input services and asserts on output. That avoids `*_test.go` files scattered next to template files and avoids binding template authors to Go's test machinery.
+Downstream tests (for the real templates that live alongside callers) stay out of scope for v1. The likely v2 path adds a declarative test mode exposed through the CLI, something like `contexttemplate --test <path-to-spec>`, with a fixture format that describes input services and asserts on output. That avoids `*_test.go` files scattered next to template files and avoids binding template authors to Go's test machinery.
 
 ## Convenience recipe
 

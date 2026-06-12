@@ -20,7 +20,7 @@ Callers pick one of three scopes per operation, or pin a default in client confi
 
 When `$XDG_DATA_HOME` doesn't resolve, the store falls back to `$HOME/.local/share` per the XDG Base Directory Specification.
 
-The `session` and `subagent` scopes share one physical file because a subagent has no lifetime beyond the session that spawned it. The namespace column separates them. A `session` write lands in the reserved `_root` namespace that every agent in the session can read and write. A `subagent` write lands in a namespace keyed by the agent's ID, walled off from peers. Every subagent picks its scope on each operation: write to `session` scope to coordinate with the orchestrator and siblings, or write to `subagent` scope for private working state nobody else touches.
+The `session` and `subagent` scopes share one physical file because a subagent has no lifetime beyond the session that spawned it. The namespace column separates them. A `session` write goes to the reserved `_root` namespace that every agent in the session can read and write. A `subagent` write goes to a namespace keyed by the agent's ID, walled off from peers. Every subagent picks its scope on each operation: write to `session` scope to coordinate with the orchestrator and siblings, or write to `subagent` scope for private working state nobody else touches.
 
 Agent teams reuse the same model. Claude Code teammates share one `session_id` with the lead, so `session` scope doubles as the team-coordination scope. Each teammate's distinct `agent_id` keys its own `subagent` namespace. No separate team scope exists in the core schema. Team-aware patterns live on top, in user-supplied hooks (see Patterns built on top).
 
@@ -44,7 +44,7 @@ Every Bash tool call inherits these variables from Claude Code without any user 
 | `CLAUDE_EFFORT` | Native | Effort level (`xhigh`, etc.). |
 | `CLAUDE_PROJECT_DIR` | Hook-process env only | Available to hooks but not to bash tool calls by default. |
 
-Session ID arrives at every bash call without any hook. The project directory, the agent ID, and the agent type all need a hook to land in the bash env.
+Session ID arrives at every bash call without any hook. The project directory, the agent ID, and the agent type all need a hook to reach the bash env.
 
 ### Hook events
 
@@ -104,7 +104,7 @@ Exit code 2 acts as the documented blocking mechanism. The stderr message become
 
 ### Reference hook
 
-`tools/agent/store/hooks/inject-agent-id` (Go binary) ships the rewrite. Registration in `.claude/settings.json`:
+`tools/agent/store/hooks/inject-agent-id` (Go binary) does the rewrite. Registration in `.claude/settings.json`:
 
 ```json
 {
@@ -386,7 +386,7 @@ Teammates share a `session_id`, so any teammate can leave a coordination flag in
 
 ### Inter-teammate message logging
 
-Teammates use the `SendMessage` tool to message each other via the team inbox mechanism. PreToolUse fires for every SendMessage call with the sender's `agent_id` plus the recipient in `tool_input.to`. A hook can persist or transform the message before it lands in the inbox:
+Teammates use the `SendMessage` tool to message each other via the team inbox mechanism. PreToolUse fires for every SendMessage call with the sender's `agent_id` plus the recipient in `tool_input.to`. A hook can persist or transform the message before it reaches the inbox:
 
 ```text
 On PreToolUse with tool_name == "SendMessage" and agent_id present:
@@ -474,7 +474,7 @@ History: {{ . }} bash failures across this repo's lifetime.
 {{- end }}
 ```
 
-The registry imports the agentstore Go package, opens one handle per scope per `Render` call, and exposes `agentstoreSession` / `agentstoreProject` / `agentstoreSubagent` template funcs (plus `*Has`, `*Keys`, `*Dump` variants). Reads only. Errors land in contexttemplate's per-render sink and templates fall back via `{{ with }}` on nil.
+The registry imports the agentstore Go package, opens one handle per scope per `Render` call, and exposes `agentstoreSession` / `agentstoreProject` / `agentstoreSubagent` template funcs (plus `*Has`, `*Keys`, `*Dump` variants). Reads only. Errors collect in contexttemplate's per-render sink and templates fall back via `{{ with }}` on nil.
 
 ## Project layout
 
@@ -500,7 +500,7 @@ A short list of items that need confirming or deciding before v1 lands.
 
 - **Pure-Go SQLite for the Go side.** The choice between `modernc.org/sqlite` (cgo-free, keeps the tool `go install`-able without a C toolchain) and `mattn/go-sqlite3` (cgo, upstream SQLite) stays open. The cgo-free option's WAL multi-process behavior wants a spot-check before committing.
 - **Time-To-Live (TTL) semantics for project scope.** Lazy reap on read leaves unread keys around forever, which matters less for session scope (file gets archived anyway) but lets the project database grow unbounded over many runs. An optional `agentstore project vacuum` recipe, or eager reap on `init`, deserves a decision.
-- **Reference hook packaging.** Whether to ship the agent-ID injection hook as a Go binary in the agentstore release, a shell script wrapper, or a `just` recipe that calls the Go CLI with a special flag, the three options all work. The choice comes down to install ergonomics for users who want subagent scope.
+- **Reference hook packaging.** Whether to distribute the agent-ID injection hook as a Go binary in the agentstore release, a shell script wrapper, or a `just` recipe that calls the Go CLI with a special flag, the three options all work. The choice comes down to install ergonomics for users who want subagent scope.
 
 ## Out of scope for v1
 
@@ -514,7 +514,7 @@ A short list of items that need confirming or deciding before v1 lands.
 - **Operations beyond the v1 surface.** The list below stays on the v2 roadmap because the v1 patterns in the preceding section don't need any of them yet:
   - **`mget` / `mset`.** Bulk multi-key reads and writes in one transaction. A latency optimization. Add when a hook's read pattern shows real per-call cost.
   - **`rename old new`.** Atomic key rename. Lets promotion patterns (subagent → session, session → project) skip the dump-set-delete dance.
-  - **`getset`.** Atomic get-then-set returning the old value. Subsumed by `CompareAndSwap` plus a read for v1; promote to a primitive if call sites get awkward.
+  - **`getset`.** Atomic get-then-set returning the old value. Subsumed by `CompareAndSwap` plus a read for v1. Promote to a primitive if call sites get awkward.
   - **`lpop` / `rpop` / `llen`.** Queue-style operations on the JSON-array convention. Inter-teammate message inboxes would consume these first.
   - **TTL management on existing keys.** `expire <key> <duration>`, `persist <key>`, and `ttl <key>` for adjusting expiry after the initial write. The v1 surface only sets TTL at write time.
   - **`history <key>`.** Audit-log-style read of past writes (who, when, what). Would need a separate audit table since the current schema overwrites in place.

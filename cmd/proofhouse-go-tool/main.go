@@ -4,7 +4,7 @@
 // Command proofhouse-go-tool provides the reference binary for the Proofhouse
 // Go reference repository. The binary itself stays intentionally minimal;
 // its purpose: give the surrounding gates something to compile against
-// and ship through the release pipeline. The repository's value sits in
+// and publish through the release pipeline. The repository's value sits in
 // the supply chain plumbing around the binary, not in the binary's own
 // command surface.
 package main
