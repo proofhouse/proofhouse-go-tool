@@ -267,13 +267,17 @@ lint-go-arch:
 # excludes the LICENSE (canonical Apache 2.0 text), the auto-generated
 # changelog, vale's own style packages, scratch dirs, vendored code,
 # the gitignored agent worktrees under .claude/worktrees/ (whose nested
-# vendor trees otherwise crash vale), and the COMMIT_AGENTMSG draft (the
+# vendor trees otherwise crash vale), the .claude/rules and
+# .claude/skills trees that `apm install` deploys from
+# proofhouse/agent-tools hash-pinned in apm.lock.yaml (this repo can't
+# reword whatever its own vale styles flag in them, which is why the
+# prek vale hook skips them too), and the COMMIT_AGENTMSG draft (the
 # `lint-commit-msg` recipe owns that one under the stricter commit
 # scope); the per-file-type rules in .vale.ini decide what else gets
 # inspected. Findings render through the proofhouse-agent template from
 # the proofhouse package: one machine-parseable line per finding.
 lint-prose *args:
-    vale --output=proofhouse-agent.tmpl --glob='!{LICENSE,CHANGELOG.md,.vale/*,tmp/*,vendor/*,.claude/worktrees/*,COMMIT_AGENTMSG}' {{ if args == "" { "." } else { args } }}
+    vale --output=proofhouse-agent.tmpl --glob='!{LICENSE,CHANGELOG.md,.vale/*,tmp/*,vendor/*,.claude/worktrees/*,.claude/rules/*,.claude/skills/*,COMMIT_AGENTMSG}' {{ if args == "" { "." } else { args } }}
 
 # Check spelling across the tree against the project dictionary at
 # .cspell-words.txt. cspell ignores binaries, generated files, and the
