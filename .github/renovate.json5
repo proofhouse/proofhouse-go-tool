@@ -2,26 +2,31 @@
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
 
   // This repo's Renovate config is mostly shared org policy, pulled in from
-  // the two presets in proofhouse/github-actions:
+  // renovate-config.json5 in proofhouse/github-actions via extends — the
+  // repository-level rules plus the Justfile and Vale custom managers shared
+  // by every repo. extends is resolved at repo scope, after platform auth is
+  // initialized, so the preset fetch is authenticated.
   //
-  //   - renovate-global-config.json5 via globalExtends — the global-only
-  //     identity, rate limits, and requireConfig (resolved at global-config
-  //     time, the only scope where those options take effect).
-  //   - renovate-config.json5 via extends — the repository-level rules plus
-  //     the Justfile and Vale custom managers shared by every repo.
+  // The global-only identity, rate-limit, and requireConfig options are
+  // inlined here rather than pulled in via globalExtends: Renovate resolves
+  // globalExtends presets before host rules are registered, so that preset
+  // fetch was always anonymous and intermittently hit GitHub's per-IP
+  // anonymous rate limit on shared runners (config-presets-invalid).
   //
   // Only the Go-module specifics stay inline below: they don't apply to the
   // non-Go repos, so they don't belong in the shared preset. packageRules
   // is a mergeable array, so the go-deps rule appends to the preset's rules.
-  globalExtends: [
-    "github>proofhouse/github-actions//.github/renovate-global-config.json5",
-  ],
+  requireConfig: "ignored",
+  username: "proofhouse-renovate[bot]",
+  gitAuthor: "proofhouse-renovate[bot] <289255489+proofhouse-renovate[bot]@users.noreply.github.com>",
+  prConcurrentLimit: 0,
+  prHourlyLimit: 0,
+
   extends: [
     "github>proofhouse/github-actions//.github/renovate-config.json5",
   ],
 
-  // Single-repo scope. The one global-only option that can't move to the
-  // shared preset — it differs per repo.
+  // Single-repo scope. Global-only, and differs per repo.
   repositories: ["proofhouse/proofhouse-go-tool"],
 
   // `gomodTidy` runs `go mod tidy` after a Go-module update so go.sum and
